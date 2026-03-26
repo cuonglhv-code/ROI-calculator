@@ -143,8 +143,7 @@ export default function ROICalculator() {
               English Course <br className="sm:hidden" /> ROI Calculator
             </h1>
             <p className="max-w-xl mx-auto text-lg text-slate-500 font-medium leading-relaxed">
-              Giải pháp tối ưu lợi nhuận khóa học <br className="hidden md:inline" /> 
-              cho các trung tâm đào tạo ngôn ngữ chuyên nghiệp.
+              Kiểm tra tỉ lệ lợi nhuận của khóa học. <br className="hidden md:inline" /> 
             </p>
           </motion.div>
         </header>
@@ -161,7 +160,7 @@ export default function ROICalculator() {
                   <Calculator className="w-6 h-6 text-indigo-400" />
                   <span className="font-bold text-lg tracking-tight uppercase">Thông số hồ sơ</span>
                 </div>
-                {!results && <span className="text-xs bg-slate-800 px-3 py-1.5 rounded-full text-slate-400 font-mono">Bản mới 2024</span>}
+                {!results && <span className="text-xs bg-slate-800 px-3 py-1.5 rounded-full text-slate-400 font-mono">Bản mới 2026</span>}
               </div>
 
               <form onSubmit={handleSubmit} className="p-10 space-y-12">

@@ -22,8 +22,6 @@ const ROICalculatorSchema = z.object({
   
   varMaterialsPerStudent: z.coerce.number().nonnegative().default(0),
   varTechnologyPerStudent: z.coerce.number().nonnegative().default(0),
-  varRefreshmentsPerStudent: z.coerce.number().nonnegative().default(0),
-  varTransactionFeePerStudent: z.coerce.number().nonnegative().default(0),
   varRecruitmentPerStudent: z.coerce.number().nonnegative().default(0),
   varOtherPerStudent: z.coerce.number().nonnegative().default(0),
 
@@ -64,7 +62,7 @@ export async function POST(req: NextRequest) {
 
     // Adjusted fixed cost and variable cost structures
     const totalFixedCost = totalTeachingCost + data.fixedVenueCost + data.fixedMaterialsCost + data.fixedTechnologyCost + data.fixedAdminCost + data.fixedMarketingCost + classroomOverhead;
-    const totalVarPerStudent = data.varMaterialsPerStudent + data.varTechnologyPerStudent + data.varRefreshmentsPerStudent + data.varTransactionFeePerStudent + data.varRecruitmentPerStudent + data.varOtherPerStudent;
+    const totalVarPerStudent = data.varMaterialsPerStudent + data.varTechnologyPerStudent + data.varRecruitmentPerStudent + data.varOtherPerStudent;
     const totalVariableCost = totalVarPerStudent * data.totalStudents;
     const totalCost = totalFixedCost + totalVariableCost;
 
@@ -234,7 +232,7 @@ export async function POST(req: NextRequest) {
         ) VALUES (
           ${data.courseName}, ${data.courseFeePerStudent}, ${data.totalStudents}, ${data.totalSessions}, ${data.hoursPerSession},
           ${data.teacherSalaryPerHour}, ${data.fixedVenueCost}, ${data.fixedMaterialsCost}, ${data.fixedTechnologyCost}, ${data.fixedAdminCost},
-          ${data.fixedMarketingCost}, ${data.varMaterialsPerStudent}, ${data.varTechnologyPerStudent}, ${data.varRefreshmentsPerStudent}, ${data.varTransactionFeePerStudent},
+          ${data.fixedMarketingCost}, ${data.varMaterialsPerStudent}, ${data.varTechnologyPerStudent}, 0, 0,
           ${data.varRecruitmentPerStudent}, ${data.varOtherPerStudent}, ${totalFixedCost}, ${totalVariableCost}, ${totalCost},
           ${totalRevenue}, ${profit}, ${roiPercent}, ${breakEvenStudents}, ${costPerStudent},
           ${marginPerStudent}, ${instructorCostPerStudent}, ${revenuePerInstructorHour},

@@ -156,7 +156,7 @@ export default function ROICalculator() {
       ["Tỷ lệ chi phí Marketing/Tuyển sinh (%) / Acquisition Cost Ratio", `${results.acquisitionCostRatio.toFixed(1)}%`],
       ["Tỷ lệ học viên tái đăng ký (%) / Expected Retention Rate %", `${formData.expectedRetentionRate || "0"}%`],
       ["Giá trị vòng đời học viên (LTV) / Customer Lifetime Value", results.customerLifetimeValue],
-      ["Chỉ số LTV/CAC / LTV to CAC Ratio", Number(formData.varRecruitmentPerStudent || 0) > 0 ? results.ltvCacRatio.toFixed(2) : "N/A"],
+      ["Tỷ số LTV / Chi phí Marketing (LTV to Marketing Ratio)", Number(formData.varRecruitmentPerStudent || 0) > 0 ? results.ltvCacRatio.toFixed(2) : "N/A"],
       ["Doanh thu bình quân/Giờ GV dạy / Revenue per Class-Hour (RevPCH)", results.revenuePerInstructorHour],
       ["", ""],
       ["4. KHUYẾN NGHỊ CHIẾN LƯỢC TỪ HỆ THỐNG / SYSTEM STRATEGIC RECOMMENDATIONS", ""],
@@ -293,15 +293,14 @@ export default function ROICalculator() {
                         <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Variable Costs & Promotional Discounts</p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-5">
+                      <div className="grid grid-cols-1 gap-5">
                       <div className="grid grid-cols-2 gap-4">
-                        <Field compact label="Marketing chiêu sinh (CAC)/HV" subLabel="Marketing CAC / Stud" name="varRecruitmentPerStudent" type="number" />
+                        <Field compact label="Chi phí Marketing trên mỗi học viên" subLabel="Marketing expenses per student" name="varRecruitmentPerStudent" type="number" />
                         <Field compact label="Giáo trình & Quà tặng / học viên" subLabel="Student Books & Gifts" name="varMaterialsPerStudent" type="number" />
                       </div>
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <Field compact label="LMS / học viên" subLabel="LMS / Student" name="varTechnologyPerStudent" type="number" />
-                        <Field compact label="Teabreak / học viên" subLabel="Teabreak / Stud" name="varRefreshmentsPerStudent" type="number" />
-                        <Field compact label="Thu hộ GD / học viên" subLabel="Trans Fee / Stud" name="varTransactionFeePerStudent" type="number" />
+                        <Field compact label="Biến phí khác / học viên" subLabel="Other Variable / Student" name="varOtherPerStudent" type="number" />
                       </div>
                       <div className="grid grid-cols-2 gap-4 pt-2 border-t border-indigo-100">
                         <Field compact label="Chiết khấu giảm giá bình quân %" subLabel="Avg Promo Discount %" name="averageDiscountPercent" type="number" placeholder="0" />
@@ -447,7 +446,7 @@ export default function ROICalculator() {
                       </div>
                       <div className="bg-slate-800/40 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between">
                         <div>
-                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-0.5">Tỷ suất LTV / CAC Ratio</span>
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-0.5">Tỷ suất LTV / Chi phí Marketing (LTV to Marketing Ratio)</span>
                           <span className={cn(
                             "text-xl font-black tracking-tight block",
                             Number(formData.varRecruitmentPerStudent || 0) === 0 ? "text-slate-400" :
@@ -460,7 +459,7 @@ export default function ROICalculator() {
                         <span className="text-[8px] font-black uppercase text-slate-500 tracking-wider">
                           {Number(formData.varRecruitmentPerStudent || 0) > 0 
                             ? (results.ltvCacRatio >= 5 ? "Tối ưu / Outstanding" : results.ltvCacRatio >= 3 ? "Đạt chuẩn / Healthy" : "Đắt đỏ / High CAC")
-                            : "Bổ sung CAC đầu người"}
+                            : "Bổ sung chi phí Marketing đầu người / Missing Marketing cost"}
                         </span>
                       </div>
                     </div>

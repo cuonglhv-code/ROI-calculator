@@ -26,6 +26,14 @@ const ROICalculatorSchema = z.object({
   varTransactionFeePerStudent: z.coerce.number().nonnegative().default(0),
   varRecruitmentPerStudent: z.coerce.number().nonnegative().default(0),
   varOtherPerStudent: z.coerce.number().nonnegative().default(0),
+
+  // New Advanced inputs
+  assistantsPerSession: z.coerce.number().int().nonnegative().default(0),
+  assistantSalaryPerHour: z.coerce.number().nonnegative().default(0),
+  averageDiscountPercent: z.coerce.number().nonnegative().max(100, "Giảm giá tối đa 100%").default(0),
+  utilitiesPerHour: z.coerce.number().nonnegative().default(0),
+  depreciationPerSession: z.coerce.number().nonnegative().default(0),
+  expectedRetentionRate: z.coerce.number().nonnegative().max(100, "Tái tuyển sinh tối đa 100%").default(0)
 });
 
 export async function POST(req: NextRequest) {
@@ -47,30 +55,38 @@ export async function POST(req: NextRequest) {
 
     const data = parseResult.data;
 
-    // 3. Core ROI Calculations
+    // 3. Core ROI Calculations - Teaching and Direct Overhead
     const instructorCost = data.totalSessions * data.hoursPerSession * data.teacherSalaryPerHour;
-    const totalFixedCost = instructorCost + data.fixedVenueCost + data.fixedMaterialsCost + data.fixedTechnologyCost + data.fixedAdminCost + data.fixedMarketingCost;
+    const assistantCost = data.totalSessions * data.hoursPerSession * data.assistantsPerSession * data.assistantSalaryPerHour;
+    const totalTeachingCost = instructorCost + assistantCost;
+
+    const classroomOverhead = (data.utilitiesPerHour * data.hoursPerSession + data.depreciationPerSession) * data.totalSessions;
+
+    // Adjusted fixed cost and variable cost structures
+    const totalFixedCost = totalTeachingCost + data.fixedVenueCost + data.fixedMaterialsCost + data.fixedTechnologyCost + data.fixedAdminCost + data.fixedMarketingCost + classroomOverhead;
     const totalVarPerStudent = data.varMaterialsPerStudent + data.varTechnologyPerStudent + data.varRefreshmentsPerStudent + data.varTransactionFeePerStudent + data.varRecruitmentPerStudent + data.varOtherPerStudent;
     const totalVariableCost = totalVarPerStudent * data.totalStudents;
     const totalCost = totalFixedCost + totalVariableCost;
-    const totalRevenue = data.courseFeePerStudent * data.totalStudents;
-    const profit = totalRevenue - totalCost;
 
+    // Tuition Net Revenue Calculations after Discount deductions
+    const netFeePerStudent = data.courseFeePerStudent * (1 - data.averageDiscountPercent / 100);
+    const totalRevenue = netFeePerStudent * data.totalStudents;
+    const profit = totalRevenue - totalCost;
     const roiPercent = totalCost > 0 ? (profit / totalCost) * 100 : 0;
     
     // 4. Unit Indicators
-    const breakEvenStudents = data.courseFeePerStudent > totalVarPerStudent 
-      ? totalFixedCost / (data.courseFeePerStudent - totalVarPerStudent) 
+    const breakEvenStudents = netFeePerStudent > totalVarPerStudent 
+      ? totalFixedCost / (netFeePerStudent - totalVarPerStudent) 
       : 0;
     const costPerStudent = data.totalStudents > 0 ? totalCost / data.totalStudents : 0;
-    const marginPerStudent = data.courseFeePerStudent - totalVarPerStudent;
-    const instructorCostPerStudent = data.totalStudents > 0 ? instructorCost / data.totalStudents : 0;
+    const marginPerStudent = netFeePerStudent - totalVarPerStudent;
+    const instructorCostPerStudent = data.totalStudents > 0 ? totalTeachingCost / data.totalStudents : 0;
     const totalInstructorHours = data.totalSessions * data.hoursPerSession;
     const revenuePerInstructorHour = totalInstructorHours > 0 ? totalRevenue / totalInstructorHours : 0;
 
     // 5. Comprehensive Financial Audit Calculations
-    const contributionMarginRatio = data.courseFeePerStudent > 0 
-      ? (marginPerStudent / data.courseFeePerStudent) * 100 
+    const contributionMarginRatio = netFeePerStudent > 0 
+      ? (marginPerStudent / netFeePerStudent) * 100 
       : 0;
     const breakEvenRevenue = contributionMarginRatio > 0 
       ? totalFixedCost / (contributionMarginRatio / 100) 
@@ -82,103 +98,111 @@ export async function POST(req: NextRequest) {
       ? totalFixedCost / totalCost 
       : 0;
     const teachingCostRatio = totalCost > 0 
-      ? (instructorCost / totalCost) * 100 
+      ? (totalTeachingCost / totalCost) * 100 
       : 0;
     const acquisitionCostRatio = totalCost > 0 
       ? ((data.fixedMarketingCost + data.varRecruitmentPerStudent * data.totalStudents) / totalCost) * 100 
       : 0;
 
-    // 6. Financial Health Score (0 - 100)
+    // 6. Student Lifetime Value (LTV) and CAC Forecast
+    const customerLifetimeValue = data.expectedRetentionRate < 100
+      ? netFeePerStudent / (1 - data.expectedRetentionRate / 100)
+      : netFeePerStudent * 5; // clamp infinite LTV to 5x net fee
+
+    const ltvCacRatio = data.varRecruitmentPerStudent > 0
+      ? customerLifetimeValue / data.varRecruitmentPerStudent
+      : 0;
+
+    // 7. Dynamic Financial Health Score (0 - 100)
     let scoreROI = 0;
-    if (roiPercent >= 25) scoreROI = 40;
-    else if (roiPercent >= 10) scoreROI = 30;
-    else if (roiPercent >= 0) scoreROI = 20;
-    else scoreROI = Math.max(0, 20 + roiPercent * 0.5); // reduce penalty for mild deficits
+    if (roiPercent >= 25) scoreROI = 30;
+    else if (roiPercent >= 10) scoreROI = 20;
+    else if (roiPercent >= 0) scoreROI = 10;
+    else scoreROI = Math.max(0, 10 + roiPercent * 0.3);
 
     let scoreSafety = 0;
-    if (safetyMarginPercent >= 30) scoreSafety = 30;
-    else if (safetyMarginPercent >= 15) scoreSafety = 20;
-    else if (safetyMarginPercent >= 0) scoreSafety = 10;
+    if (safetyMarginPercent >= 30) scoreSafety = 25;
+    else if (safetyMarginPercent >= 15) scoreSafety = 15;
+    else if (safetyMarginPercent >= 0) scoreSafety = 5;
+
+    let scoreLTV = 15; // default to neutral if CAC is 0
+    if (data.varRecruitmentPerStudent > 0) {
+      if (ltvCacRatio >= 5) scoreLTV = 25;
+      else if (ltvCacRatio >= 3) scoreLTV = 15;
+      else scoreLTV = 5;
+    }
 
     let scoreCMR = 0;
-    if (contributionMarginRatio >= 60) scoreCMR = 20;
-    else if (contributionMarginRatio >= 40) scoreCMR = 15;
-    else if (contributionMarginRatio >= 20) scoreCMR = 10;
+    if (contributionMarginRatio >= 60) scoreCMR = 15;
+    else if (contributionMarginRatio >= 40) scoreCMR = 10;
     else scoreCMR = 5;
 
-    let scoreTeaching = 0;
-    if (teachingCostRatio >= 20 && teachingCostRatio <= 40) scoreTeaching = 10;
-    else if (teachingCostRatio > 0) scoreTeaching = 5;
+    let scoreStaff = 2;
+    if (teachingCostRatio >= 20 && teachingCostRatio <= 40) scoreStaff = 5;
 
-    const healthScore = Math.min(100, Math.max(0, Math.round(scoreROI + scoreSafety + scoreCMR + scoreTeaching)));
+    const healthScore = Math.min(100, Math.max(0, Math.round(scoreROI + scoreSafety + scoreLTV + scoreCMR + scoreStaff)));
 
-    // 7. Dynamic Strategic Advisory Engine (Generates custom business tips based on metrics)
+    // 8. Dynamic Strategic Advisory Engine
     const recommendations: { type: "warning" | "info" | "success"; text: string }[] = [];
 
-    // Financial Viability Advice
+    // LTV/CAC Advisor
+    if (data.varRecruitmentPerStudent > 0) {
+      if (ltvCacRatio < 3) {
+        recommendations.push({
+          type: "warning",
+          text: `Chỉ số LTV/CAC thấp (${ltvCacRatio.toFixed(1)} < 3.0). Chi phí chiêu sinh học viên (CAC: ${data.varRecruitmentPerStudent.toLocaleString("vi-VN")}đ) quá đắt so với Giá trị trọn đời (LTV: ${customerLifetimeValue.toLocaleString("vi-VN")}đ). Cần nâng cao tỷ lệ tái đăng ký hoặc tối ưu hóa kênh tiếp thị.`
+        });
+      } else if (ltvCacRatio >= 5) {
+        recommendations.push({
+          type: "success",
+          text: `Tỷ lệ LTV/CAC lý tưởng (${ltvCacRatio.toFixed(1)} > 5.0). Giá trị trọn đời học viên mang lại gấp ${ltvCacRatio.toFixed(0)} lần chi phí tuyển sinh ban đầu. Đề xuất tăng cường ngân sách Marketing để đẩy nhanh tiến độ thu hút.`
+        });
+      } else {
+        recommendations.push({
+          type: "success",
+          text: `Tỷ lệ LTV/CAC khỏe mạnh (${ltvCacRatio.toFixed(1)}). Hoạt động tuyển sinh và chăm sóc khách hàng đang giữ nhịp độ cân bằng, đạt chuẩn doanh nghiệp giáo dục hiệu quả.`
+        });
+      }
+    } else {
+      recommendations.push({
+        type: "info",
+        text: "Hệ thống chưa ghi nhận biến phí tuyển sinh (CAC). Hãy bổ sung phí chiêu sinh lẻ trên mỗi học viên để kích hoạt bộ đo lường sức khỏe LTV/CAC trọn đời."
+      });
+    }
+
+    // Discounts & Net pricing Advisor
+    if (data.averageDiscountPercent > 15) {
+      recommendations.push({
+        type: "warning",
+        text: `Tỷ lệ chiết khấu giảm giá đang ở mức cao (${data.averageDiscountPercent.toFixed(0)}%). Điều này kéo học phí thực thu ròng xuống còn ${netFeePerStudent.toLocaleString("vi-VN")}đ. Hãy hạn chế giảm giá trực tiếp, đổi sang tặng thêm tài liệu độc quyền.`
+      });
+    }
+
+    // Staffing / TA Advisor
+    if (data.assistantsPerSession > 0 && assistantCost > instructorCost * 0.4) {
+      recommendations.push({
+        type: "warning",
+        text: `Chi phí trợ giảng (${assistantCost.toLocaleString("vi-VN")}đ) đang chiếm tỷ trọng lớn so với giáo viên chính. Khuyến nghị điều chỉnh lại cơ cấu nhiệm vụ trợ giảng hoặc tăng sỉ số lớp.`
+      });
+    }
+
+    // Profitability Advisor
     if (profit < 0) {
       recommendations.push({
         type: "warning",
-        text: `Khóa học đang hoạt động dưới điểm hòa vốn và lỗ ${Math.abs(profit).toLocaleString("vi-VN")} VNĐ. Cần lập tức nâng học phí hoặc tối ưu hóa cơ cấu định phí cố định.`
+        text: `Khóa học đang lỗ ròng ${Math.abs(profit).toLocaleString("vi-VN")}đ. Cần cắt giảm hao mòn vận hành phòng học (${classroomOverhead.toLocaleString("vi-VN")}đ) hoặc nâng học phí lên tối thiểu ${breakEvenRevenue.toLocaleString("vi-VN")}đ để đạt điểm hòa vốn.`
       });
     } else if (roiPercent >= 30) {
       recommendations.push({
         type: "success",
-        text: `Tỷ suất ROI vượt trội (${roiPercent.toFixed(1)}%). Đây là một mô hình khóa học tối ưu và có khả năng sinh lời cực lớn, khuyến nghị nhân rộng sang các cơ sở khác.`
-      });
-    } else {
-      recommendations.push({
-        type: "info",
-        text: `Khóa học có biên lợi nhuận ổn định. Tiếp tục duy trì hiệu suất vận hành hiện tại và tập trung gia tăng sỉ số học viên.`
+        text: `ROI tuyệt vời (${roiPercent.toFixed(1)}%). Mô hình đào tạo '${data.courseName}' đang vận hành với biên lợi nhuận ròng rất tốt, khuyến nghị nhân rộng sang các cơ sở.`
       });
     }
 
-    // Safety & Enrollment Advice
-    if (safetyMarginPercent < 0) {
-      const missingStuds = Math.ceil(breakEvenStudents - data.totalStudents);
-      recommendations.push({
-        type: "warning",
-        text: `Lớp học chưa đạt ngưỡng hòa vốn. Cần tuyển thêm ít nhất ${missingStuds} học viên nữa để bắt đầu có lãi, hoặc cân nhắc sáp nhập với các lớp học khác.`
-      });
-    } else if (safetyMarginPercent < 20) {
-      recommendations.push({
-        type: "warning",
-        text: `Biên an toàn rất mỏng (${safetyMarginPercent.toFixed(1)}%). Chỉ cần sụt giảm từ 1 - 2 học viên là lớp học sẽ bắt đầu lỗ. Hãy tập trung tăng tỷ lệ giữ chân học viên.`
-      });
-    } else {
-      recommendations.push({
-        type: "success",
-        text: `Biên an toàn ở mức lý tưởng (${safetyMarginPercent.toFixed(1)}%). Lớp học có khả năng chống chịu cao trước biến động nghỉ học hoặc hoãn lớp của học viên.`
-      });
-    }
-
-    // Cost Efficiency & Leverage Advice
-    if (teachingCostRatio > 45) {
-      recommendations.push({
-        type: "info",
-        text: `Chi phí giảng dạy giáo viên chiếm đến ${teachingCostRatio.toFixed(0)}% tổng ngân sách (ngưỡng lý tưởng: 25-35%). Nên thương lượng lương khoán theo lớp học hoặc tăng nhẹ sỉ số học viên mỗi lớp.`
-      });
-    } else if (acquisitionCostRatio > 35) {
-      recommendations.push({
-        type: "warning",
-        text: `Chi phí tuyển sinh & Marketing chiếm tỷ trọng lớn (${acquisitionCostRatio.toFixed(0)}% chi phí). Cần rà soát các kênh truyền thông và cải thiện tỷ lệ chuyển đổi bán hàng.`
-      });
-    } else if (operatingLeverage > 0.7) {
-      recommendations.push({
-        type: "info",
-        text: `Đòn bẩy vận hành ở mức cao (${(operatingLeverage * 100).toFixed(0)}% chi phí là cố định). Mô hình này sẽ sinh lời bùng nổ khi gia tăng học viên mà không tăng thêm nhiều chi phí.`
-      });
-    } else {
-      recommendations.push({
-        type: "info",
-        text: `Cơ cấu chi phí cân bằng. Lợi nhuận đóng góp của mỗi học viên đạt ${(contributionMarginRatio).toFixed(0)}% học phí, cho phép linh hoạt triển khai các chương trình học bổng.`
-      });
-    }
-
-    // Standard single-line interpretation
+    // General interpretation
     let interpretation = "";
     if (totalCost === 0 && totalRevenue > 0) {
-      interpretation = `Không có chi phí; ${totalRevenue.toLocaleString("vi-VN")} VNĐ lợi nhuận thuần.`;
+      interpretation = `Không có chi phí; ${totalRevenue.toLocaleString("vi-VN")} VNĐ lợi nhuận ròng.`;
     } else if (roiPercent >= 20) {
       interpretation = `LỢI NHUẬN CAO: ${roiPercent.toFixed(1)}% ROI`;
     } else if (roiPercent >= 10) {
@@ -189,7 +213,7 @@ export async function POST(req: NextRequest) {
       interpretation = `ĐANG LỖ: ${roiPercent.toFixed(1)}% ROI`;
     }
 
-    // 8. Decoupled Neon Database Logging for High Resilience
+    // 9. Decoupled Neon Database Logging for High Resilience
     try {
       await sql`
         INSERT INTO roi_calculator_data (
@@ -201,7 +225,12 @@ export async function POST(req: NextRequest) {
           total_revenue, profit, roi_percent, break_even_students, cost_per_student,
           margin_per_student, instructor_cost_per_student, revenue_per_instructor_hour,
           contribution_margin_ratio, break_even_revenue, safety_margin_percent,
-          operating_leverage, teaching_cost_ratio, acquisition_cost_ratio, health_score
+          operating_leverage, teaching_cost_ratio, acquisition_cost_ratio, health_score,
+          
+          -- New advanced values
+          assistants_per_session, assistant_salary_per_hour, average_discount_percent,
+          utilities_per_hour, depreciation_per_session, expected_retention_rate,
+          assistant_cost, classroom_overhead, customer_lifetime_value, ltv_cac_ratio
         ) VALUES (
           ${data.courseName}, ${data.courseFeePerStudent}, ${data.totalStudents}, ${data.totalSessions}, ${data.hoursPerSession},
           ${data.teacherSalaryPerHour}, ${data.fixedVenueCost}, ${data.fixedMaterialsCost}, ${data.fixedTechnologyCost}, ${data.fixedAdminCost},
@@ -210,7 +239,12 @@ export async function POST(req: NextRequest) {
           ${totalRevenue}, ${profit}, ${roiPercent}, ${breakEvenStudents}, ${costPerStudent},
           ${marginPerStudent}, ${instructorCostPerStudent}, ${revenuePerInstructorHour},
           ${contributionMarginRatio}, ${breakEvenRevenue}, ${safetyMarginPercent},
-          ${operatingLeverage}, ${teachingCostRatio}, ${acquisitionCostRatio}, ${healthScore}
+          ${operatingLeverage}, ${teachingCostRatio}, ${acquisitionCostRatio}, ${healthScore},
+          
+          -- Advanced entries
+          ${data.assistantsPerSession}, ${data.assistantSalaryPerHour}, ${data.averageDiscountPercent},
+          ${data.utilitiesPerHour}, ${data.depreciationPerSession}, ${data.expectedRetentionRate},
+          ${assistantCost}, ${classroomOverhead}, ${customerLifetimeValue}, ${ltvCacRatio}
         )
       `;
       console.log("ROI calculation successfully logged to Neon database.");
@@ -222,7 +256,10 @@ export async function POST(req: NextRequest) {
       totalFixedCost, totalVariableCost, totalCost, totalRevenue, profit, roiPercent, interpretation,
       breakEvenStudents, costPerStudent, marginPerStudent, instructorCostPerStudent, revenuePerInstructorHour,
       contributionMarginRatio, breakEvenRevenue, safetyMarginPercent,
-      operatingLeverage, teachingCostRatio, acquisitionCostRatio, healthScore, recommendations
+      operatingLeverage, teachingCostRatio, acquisitionCostRatio, healthScore,
+      
+      // Advanced audit output metrics
+      assistantCost, classroomOverhead, customerLifetimeValue, ltvCacRatio, netFeePerStudent, recommendations
     });
   } catch (error) {
     console.error("ROI calculation runtime failure:", error);

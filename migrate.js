@@ -2,7 +2,7 @@ const { neon } = require('@neondatabase/serverless');
 const fs = require('fs');
 const path = require('path');
 
-// 1. Safe dynamic loading of environment variables from .env.local (zero-dependency)
+// Load env vars dynamically from .env.local
 if (!process.env.DATABASE_URL) {
   try {
     const envPath = path.resolve(process.cwd(), '.env.local');
@@ -28,9 +28,9 @@ const sql = neon(process.env.DATABASE_URL);
 
 async function run() {
   try {
-    console.log("Running Neon Database Migration...");
+    console.log("Running Neon Database Migration - Advanced Cost Model Expansion...");
 
-    // 2. Base Table Creation with advanced audit metrics
+    // 1. Table schema definition with advanced cost columns
     await sql`
 CREATE TABLE IF NOT EXISTS roi_calculator_data (
   id SERIAL PRIMARY KEY,
@@ -76,22 +76,43 @@ CREATE TABLE IF NOT EXISTS roi_calculator_data (
   operating_leverage NUMERIC(5, 2) NOT NULL DEFAULT 0,
   teaching_cost_ratio NUMERIC(5, 2) NOT NULL DEFAULT 0,
   acquisition_cost_ratio NUMERIC(5, 2) NOT NULL DEFAULT 0,
-  health_score INTEGER NOT NULL DEFAULT 0
+  health_score INTEGER NOT NULL DEFAULT 0,
+
+  -- New advanced inputs
+  assistants_per_session INTEGER NOT NULL DEFAULT 0,
+  assistant_salary_per_hour NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  average_discount_percent NUMERIC(5, 2) NOT NULL DEFAULT 0,
+  utilities_per_hour NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  depreciation_per_session NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  expected_retention_rate NUMERIC(5, 2) NOT NULL DEFAULT 0,
+
+  -- New advanced outputs
+  assistant_cost NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  classroom_overhead NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  customer_lifetime_value NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  ltv_cac_ratio NUMERIC(12, 2) NOT NULL DEFAULT 0
 );
     `;
     console.log("Table structure verified.");
 
-    // 3. Incremental updates for existing tables (ALTER TABLE IF EXISTS)
-    console.log("Applying incremental schema updates...");
-    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS contribution_margin_ratio NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
-    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS break_even_revenue NUMERIC(12, 2) NOT NULL DEFAULT 0;`;
-    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS safety_margin_percent NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
-    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS operating_leverage NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
-    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS teaching_cost_ratio NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
-    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS acquisition_cost_ratio NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
-    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS health_score INTEGER NOT NULL DEFAULT 0;`;
+    // 2. Incremental schema updates using ALTER TABLE ADD COLUMN IF NOT EXISTS
+    console.log("Applying incremental schema updates for advanced parameters...");
+    
+    // Inputs
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS assistants_per_session INTEGER NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS assistant_salary_per_hour NUMERIC(10, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS average_discount_percent NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS utilities_per_hour NUMERIC(10, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS depreciation_per_session NUMERIC(10, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS expected_retention_rate NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
+    
+    // Outputs
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS assistant_cost NUMERIC(12, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS classroom_overhead NUMERIC(12, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS customer_lifetime_value NUMERIC(12, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS ltv_cac_ratio NUMERIC(12, 2) NOT NULL DEFAULT 0;`;
 
-    console.log("Migration successful! roi_calculator_data is fully aligned with advanced financial audit schema.");
+    console.log("Migration successful! roi_calculator_data is fully aligned with advanced English Center financial audit schema.");
   } catch (err) {
     console.error("Migration failed:", err);
     process.exit(1);

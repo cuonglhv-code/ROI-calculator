@@ -1,11 +1,36 @@
 const { neon } = require('@neondatabase/serverless');
+const fs = require('fs');
+const path = require('path');
 
-const databaseUrl = 'postgresql://neondb_owner:npg_Lx1wuF8ygrEt@ep-rapid-bread-abhxeihu-pooler.eu-west-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require';
-const sql = neon(databaseUrl);
+// 1. Safe dynamic loading of environment variables from .env.local (zero-dependency)
+if (!process.env.DATABASE_URL) {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env.local');
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const match = envContent.match(/DATABASE_URL=["']?([^"'\n]+)["']?/);
+      if (match) {
+        process.env.DATABASE_URL = match[1];
+        console.log("Loaded DATABASE_URL successfully from .env.local");
+      }
+    }
+  } catch (err) {
+    console.error("Warning: Could not read .env.local file:", err.message);
+  }
+}
+
+if (!process.env.DATABASE_URL) {
+  console.error("CRITICAL ERROR: DATABASE_URL is missing! Please configure it in your environment or .env.local.");
+  process.exit(1);
+}
+
+const sql = neon(process.env.DATABASE_URL);
 
 async function run() {
   try {
-    console.log("Running migration...");
+    console.log("Running Neon Database Migration...");
+
+    // 2. Base Table Creation with advanced audit metrics
     await sql`
 CREATE TABLE IF NOT EXISTS roi_calculator_data (
   id SERIAL PRIMARY KEY,
@@ -43,12 +68,33 @@ CREATE TABLE IF NOT EXISTS roi_calculator_data (
   cost_per_student NUMERIC(12, 2) NOT NULL DEFAULT 0,
   margin_per_student NUMERIC(12, 2) NOT NULL DEFAULT 0,
   instructor_cost_per_student NUMERIC(12, 2) NOT NULL DEFAULT 0,
-  revenue_per_instructor_hour NUMERIC(12, 2) NOT NULL DEFAULT 0
+  revenue_per_instructor_hour NUMERIC(12, 2) NOT NULL DEFAULT 0,
+
+  contribution_margin_ratio NUMERIC(5, 2) NOT NULL DEFAULT 0,
+  break_even_revenue NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  safety_margin_percent NUMERIC(5, 2) NOT NULL DEFAULT 0,
+  operating_leverage NUMERIC(5, 2) NOT NULL DEFAULT 0,
+  teaching_cost_ratio NUMERIC(5, 2) NOT NULL DEFAULT 0,
+  acquisition_cost_ratio NUMERIC(5, 2) NOT NULL DEFAULT 0,
+  health_score INTEGER NOT NULL DEFAULT 0
 );
     `;
-    console.log("Migration successful! TABLE 'roi_calculator_data' is ready.");
+    console.log("Table structure verified.");
+
+    // 3. Incremental updates for existing tables (ALTER TABLE IF EXISTS)
+    console.log("Applying incremental schema updates...");
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS contribution_margin_ratio NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS break_even_revenue NUMERIC(12, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS safety_margin_percent NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS operating_leverage NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS teaching_cost_ratio NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS acquisition_cost_ratio NUMERIC(5, 2) NOT NULL DEFAULT 0;`;
+    await sql`ALTER TABLE roi_calculator_data ADD COLUMN IF NOT EXISTS health_score INTEGER NOT NULL DEFAULT 0;`;
+
+    console.log("Migration successful! roi_calculator_data is fully aligned with advanced financial audit schema.");
   } catch (err) {
     console.error("Migration failed:", err);
+    process.exit(1);
   }
 }
 

@@ -216,7 +216,7 @@ export default function ROICalculator() {
                 {!results && <span className="text-xs bg-slate-800 px-3 py-1.5 rounded-full text-slate-400 font-mono">Bilingual 2026</span>}
               </div>
 
-              <form ref={formRef} onSubmit={handleSubmit} className="p-10 space-y-12">
+              <form ref={formRef} onSubmit={handleSubmit} className="p-6 sm:p-10 space-y-12">
                 
                 {/* Section 1: Course & Pricing */}
                 <div className="space-y-6">
@@ -415,7 +415,7 @@ export default function ROICalculator() {
                   </div>
 
                   {/* LTV & CAC Forecast Bento Panel (8 cols) */}
-                  <div className="lg:col-span-8 bg-slate-900 text-white rounded-[2.5rem] p-9 shadow-2xl relative overflow-hidden flex flex-col justify-between border-4 border-slate-800">
+                  <div className="lg:col-span-8 bg-slate-900 text-white rounded-[2.5rem] p-6 sm:p-9 shadow-2xl relative overflow-hidden flex flex-col justify-between border-4 border-slate-800">
                     <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
                       <Award className="w-56 h-56 -mr-8 -mt-8" />
                     </div>
@@ -470,7 +470,7 @@ export default function ROICalculator() {
                 {/* Bento Row 2: Cost Structure Distribution & Strategic Advisory Recommendations */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                   {/* Recommendations Panel (7 cols) */}
-                  <div className="lg:col-span-7 bg-white rounded-[2.5rem] p-10 shadow-xl border border-slate-200 space-y-6 relative">
+                  <div className="lg:col-span-7 bg-white rounded-[2.5rem] p-6 sm:p-10 shadow-xl border border-slate-200 space-y-6 relative">
                     <div className="flex items-center gap-3 text-slate-800 pb-2 border-b border-slate-100">
                       <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600 shrink-0">
                         <Sparkles className="w-5 h-5" />
@@ -523,7 +523,7 @@ export default function ROICalculator() {
                   </div>
 
                   {/* Cost Distribution Bento Panel (5 cols) */}
-                  <div className="lg:col-span-5 bg-white rounded-[2.5rem] p-10 shadow-xl border border-slate-200 flex flex-col justify-between space-y-6">
+                  <div className="lg:col-span-5 bg-white rounded-[2.5rem] p-6 sm:p-10 shadow-xl border border-slate-200 flex flex-col justify-between space-y-6">
                     <div className="flex items-center gap-3 text-slate-800 pb-2 border-b border-slate-100">
                       <div className="p-2 bg-emerald-50 rounded-xl text-emerald-600 shrink-0">
                         <BarChart3 className="w-5 h-5" />
@@ -608,7 +608,7 @@ export default function ROICalculator() {
                         </div>
                       </div>
                     </div>
-                    <div className="p-10 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10">
+                    <div className="p-6 sm:p-10 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10">
                        <StatItem label="Chi phí trợ giảng" subLabel="Assistant Cost (TA)" value={formatCurrency(results.assistantCost)} />
                        <StatItem label="Khấu hao tiện ích phòng" subLabel="Classroom Wear & Utilities" value={formatCurrency(results.classroomOverhead)} />
                        <StatItem label="Định phí cố định tổng" subLabel="Total Fixed Cost" value={formatCurrency(results.totalFixedCost)} />
@@ -629,7 +629,7 @@ export default function ROICalculator() {
                         </div>
                       </div>
                     </div>
-                    <div className="p-10 space-y-6">
+                    <div className="p-6 sm:p-10 space-y-6">
                       <MetricRow label="Ngưỡng học viên hòa vốn" subLabel="Break-even Enrollment" value={results.breakEvenStudents.toFixed(1)} suffix="Học viên" suffixEn="Students" />
                       <MetricRow label="Doanh thu hòa vốn thực tế" subLabel="Break-even Revenue Threshold" value={formatCurrency(results.breakEvenRevenue)} />
                       
@@ -706,16 +706,19 @@ interface FieldProps {
 function Field({ label, subLabel, name, id, type = "text", required, placeholder, step, compact }: FieldProps) {
   const inputId = id || name;
   return (
-    <div className="flex flex-col gap-2 group">
+    <div className="flex flex-col gap-1.5 group">
       <label 
         htmlFor={inputId}
-        className={cn(
-          "font-extrabold text-slate-700 tracking-tight transition-colors group-focus-within:text-indigo-600 flex items-baseline justify-between gap-2",
-          compact ? "text-[11px]" : "text-xs"
-        )}
+        className="font-extrabold text-slate-700 tracking-tight transition-colors group-focus-within:text-indigo-600 flex flex-col"
       >
-        <span>{label} {required && <span className="text-rose-500">*</span>}</span>
-        {subLabel && <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest shrink-0">{subLabel}</span>}
+        <span className={cn(compact ? "text-xs" : "text-sm", "leading-tight")}>
+          {label} {required && <span className="text-rose-500">*</span>}
+        </span>
+        {subLabel && (
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mt-0.5 block">
+            {subLabel}
+          </span>
+        )}
       </label>
       <input
         id={inputId}
@@ -742,14 +745,20 @@ interface StatItemProps {
 
 function StatItem({ label, subLabel, value, highlighted }: StatItemProps) {
   return (
-    <div className="space-y-1">
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-baseline justify-between gap-2">
-        <span>{label}</span>
+    <div className="space-y-1 min-w-0">
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate leading-tight">
+        {label}
       </p>
-      {subLabel && <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider -mt-1">{subLabel}</p>}
+      {subLabel && (
+        <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider leading-none truncate">
+          {subLabel}
+        </p>
+      )}
       <p className={cn(
-        "font-black tracking-tight leading-none pt-1",
-        highlighted ? "text-slate-900 text-2xl sm:text-3xl" : "text-slate-600 text-xl sm:text-2xl"
+        "font-black tracking-tight leading-none pt-1 truncate hover:text-clip hover:whitespace-normal",
+        highlighted 
+          ? "text-slate-900 text-lg xs:text-xl sm:text-2xl md:text-3xl" 
+          : "text-slate-600 text-base xs:text-lg sm:text-xl md:text-2xl"
       )}>
         {value}
       </p>
@@ -767,17 +776,21 @@ interface MetricRowProps {
 
 function MetricRow({ label, subLabel, value, suffix, suffixEn }: MetricRowProps) {
   return (
-    <div className="flex items-center justify-between group py-2.5 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors rounded-lg px-2 -mx-2">
-      <div className="flex flex-col">
-        <span className="text-slate-600 text-xs font-bold tracking-tight">{label}</span>
-        {subLabel && <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5 leading-none">{subLabel}</span>}
+    <div className="flex items-center justify-between gap-4 group py-2.5 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors rounded-lg px-2 -mx-2 min-w-0">
+      <div className="flex flex-col min-w-0 flex-1">
+        <span className="text-slate-600 text-xs font-bold tracking-tight leading-tight truncate hover:text-clip hover:whitespace-normal">{label}</span>
+        {subLabel && (
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5 leading-none truncate hover:text-clip hover:whitespace-normal">
+            {subLabel}
+          </span>
+        )}
       </div>
-      <div className="flex items-baseline gap-1.5">
-        <span className="text-xl font-black text-slate-900 tracking-tighter group-hover:text-indigo-600 transition-colors">
+      <div className="flex items-center gap-1.5 shrink-0 text-right">
+        <span className="text-lg font-black text-slate-900 tracking-tighter group-hover:text-indigo-600 transition-colors">
           {value}
         </span>
         {suffix && (
-          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none flex flex-col items-end">
+          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none flex flex-col items-end shrink-0">
             <span>{suffix}</span>
             {suffixEn && <span className="text-[6px] opacity-75">{suffixEn}</span>}
           </span>

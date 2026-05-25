@@ -118,48 +118,49 @@ export default function ROICalculator() {
     if (!results) return;
 
     const rows = [
-      ["BÁO CÁO PHÂN TÍCH TÀI CHÍNH & KIỂM TOÁN LỢI NHUẬN KHÓA HỌC", ""],
-      ["Tên khóa học", formData.courseName || ""],
-      ["Ngày xuất báo cáo", new Date().toLocaleDateString("vi-VN")],
+      ["BÁO CÁO PHÂN TÍCH TÀI CHÍNH & KIỂM TOÁN LỢI NHUẬN KHÓA HỌC / FINANCIAL AUDIT & ROI REPORT", ""],
+      ["Tên khóa học / Course Name", formData.courseName || ""],
+      ["Ngày xuất báo cáo / Audit Date", new Date().toLocaleDateString("vi-VN")],
       ["", ""],
-      ["1. THÔNG SỐ KHÓA HỌC & ĐỊNH LƯỢNG", ""],
-      ["Học phí danh nghĩa (Gốc)", formData.courseFeePerStudent || "0"],
-      ["Tỷ lệ chiết khấu bình quân (%)", `${formData.averageDiscountPercent || "0"}%`],
-      ["Học phí thực thu ròng (Net Tuition)", results.netFeePerStudent],
-      ["Tổng số học viên tuyển sinh", formData.totalStudents || "0"],
-      ["Tổng số buổi học", formData.totalSessions || "0"],
-      ["Số giờ dạy/buổi học", formData.hoursPerSession || "0"],
-      ["Lương giáo viên chính/giờ", formData.teacherSalaryPerHour || "0"],
-      ["Số lượng trợ giảng (TA)/buổi", formData.assistantsPerSession || "0"],
-      ["Lương trợ giảng/giờ", formData.assistantSalaryPerHour || "0"],
+      ["1. THÔNG SỐ KHÓA HỌC & ĐỊNH LƯỢNG / COURSE PARAMETERS & QUANTITIES", ""],
+      ["Học phí danh nghĩa (Gốc) / Nominal Tuition", formData.courseFeePerStudent || "0"],
+      ["Tỷ lệ chiết khấu bình quân (%) / Average Discount %", `${formData.averageDiscountPercent || "0"}%`],
+      ["Học phí thực thu ròng (Net Tuition) / Net Tuition", results.netFeePerStudent],
+      ["Tổng số học viên tuyển sinh / Target Enrollment", formData.totalStudents || "0"],
+      ["Tổng số buổi học / Sessions Count", formData.totalSessions || "0"],
+      ["Số giờ dạy/buổi học / Hours per Session", formData.hoursPerSession || "0"],
+      ["Lương giáo viên chính/giờ / Main Teacher Rate (Hourly)", formData.teacherSalaryPerHour || "0"],
+      ["Số lượng trợ giảng (TA)/buổi / TAs per Class", formData.assistantsPerSession || "0"],
+      ["Lương trợ giảng/giờ / TA Rate (Hourly)", formData.assistantSalaryPerHour || "0"],
       ["", ""],
-      ["2. TỔNG KẾT BÁO CÁO KIỂM TOÁN (VNĐ)", ""],
-      ["Tổng chi phí nhân sự giảng dạy (GV + TA)", results.totalFixedCost - results.classroomOverhead - Number(formData.fixedVenueCost || 0) - Number(formData.fixedMaterialsCost || 0) - Number(formData.fixedTechnologyCost || 0) - Number(formData.fixedAdminCost || 0) - Number(formData.fixedMarketingCost || 0)],
-      ["Chi phí tiện ích & hao mòn lớp học", results.classroomOverhead],
-      ["Tổng chi phí cố định (Định phí)", results.totalFixedCost],
-      ["Tổng chi phí biến đổi (Biến phí)", results.totalVariableCost],
-      ["Tổng chi phí đầu tư khóa học", results.totalCost],
-      ["Tổng doanh thu ròng dự kiến", results.totalRevenue],
-      ["Lợi nhuận ròng thực tế", results.profit],
-      ["Tỷ suất ROI (%)", `${results.roiPercent.toFixed(1)}%`],
-      ["Điểm sức khỏe tài chính (/100)", results.healthScore],
-      ["Nhận định chung", results.interpretation],
+      ["2. TỔNG KẾT BÁO CÁO KIỂM TOÁN (VNĐ) / FINANCIAL BALANCE AUDIT (VND)", ""],
+      ["Chi phí giảng dạy chính (GV) / Main Instructor Cost", results.totalFixedCost - results.classroomOverhead - results.assistantCost - Number(formData.fixedVenueCost || 0) - Number(formData.fixedMaterialsCost || 0) - Number(formData.fixedTechnologyCost || 0) - Number(formData.fixedAdminCost || 0) - Number(formData.fixedMarketingCost || 0)],
+      ["Chi phí trợ giảng (TA) / Teaching Assistant Cost", results.assistantCost],
+      ["Chi phí tiện ích & hao mòn lớp học / Classroom Utilities & Wear", results.classroomOverhead],
+      ["Tổng chi phí cố định (Định phí) / Total Fixed Cost", results.totalFixedCost],
+      ["Tổng chi phí biến đổi (Biến phí) / Total Variable Cost", results.totalVariableCost],
+      ["Tổng chi phí đầu tư khóa học / Total Invested Cost", results.totalCost],
+      ["Tổng doanh thu ròng dự kiến / Net Tuition Revenue", results.totalRevenue],
+      ["Lợi nhuận ròng thực tế / Net Profit", results.profit],
+      ["Tỷ suất ROI (%) / Return on Investment (ROI %)", `${results.roiPercent.toFixed(1)}%`],
+      ["Điểm sức khỏe tài chính / Financial Health Score", results.healthScore],
+      ["Nhận định chung / Audit Interpretation", results.interpretation],
       ["", ""],
-      ["3. CHỈ SỐ TÀI CHÍNH CHUYÊN SÂU & LTV FORECAST", ""],
-      ["Học viên hòa vốn", results.breakEvenStudents.toFixed(1)],
-      ["Doanh thu hòa vốn (VNĐ)", results.breakEvenRevenue],
-      ["Biên an toàn (%)", `${results.safetyMarginPercent.toFixed(1)}%`],
-      ["Tỷ suất lợi nhuận đóng góp (CMR %)", `${results.contributionMarginRatio.toFixed(1)}%`],
-      ["Đòn bẩy vận hành", results.operatingLeverage.toFixed(2)],
-      ["Tỷ lệ chi phí giảng dạy (%)", `${results.teachingCostRatio.toFixed(1)}%`],
-      ["Tỷ lệ chi phí Marketing/Tuyển sinh (%)", `${results.acquisitionCostRatio.toFixed(1)}%`],
-      ["Tỷ lệ học viên tái đăng ký (%)", `${formData.expectedRetentionRate || "0"}%`],
-      ["Giá trị vòng đời học viên (LTV)", results.customerLifetimeValue],
-      ["Chỉ số LTV/CAC", Number(formData.varRecruitmentPerStudent || 0) > 0 ? results.ltvCacRatio.toFixed(2) : "N/A"],
-      ["Doanh thu bình quân/Giờ GV dạy", results.revenuePerInstructorHour],
+      ["3. CHỈ SỐ TÀI CHÍNH CHUYÊN SÂU & LTV FORECAST / SYSTEM KPIs & LTV PREDICTIONS", ""],
+      ["Học viên hòa vốn / Break-even Enrollment", results.breakEvenStudents.toFixed(1)],
+      ["Doanh thu hòa vốn (VNĐ) / Break-even Revenue", results.breakEvenRevenue],
+      ["Biên an toàn (%) / Financial Safety Margin %", `${results.safetyMarginPercent.toFixed(1)}%`],
+      ["Tỷ suất lợi nhuận đóng góp (CMR %) / Contribution Margin Ratio", `${results.contributionMarginRatio.toFixed(1)}%`],
+      ["Đòn bẩy vận hành / Degree of Operating Leverage (DOL)", results.operatingLeverage.toFixed(2)],
+      ["Tỷ lệ chi phí giảng dạy (%) / Teaching Cost Ratio", `${results.teachingCostRatio.toFixed(1)}%`],
+      ["Tỷ lệ chi phí Marketing/Tuyển sinh (%) / Acquisition Cost Ratio", `${results.acquisitionCostRatio.toFixed(1)}%`],
+      ["Tỷ lệ học viên tái đăng ký (%) / Expected Retention Rate %", `${formData.expectedRetentionRate || "0"}%`],
+      ["Giá trị vòng đời học viên (LTV) / Customer Lifetime Value", results.customerLifetimeValue],
+      ["Chỉ số LTV/CAC / LTV to CAC Ratio", Number(formData.varRecruitmentPerStudent || 0) > 0 ? results.ltvCacRatio.toFixed(2) : "N/A"],
+      ["Doanh thu bình quân/Giờ GV dạy / Revenue per Class-Hour (RevPCH)", results.revenuePerInstructorHour],
       ["", ""],
-      ["4. KHUYẾN NGHỊ CHIẾN LƯỢC TỪ HỆ THỐNG", ""],
-      ...results.recommendations.map((rec, i) => [`Khuyến nghị ${i + 1}`, rec.text])
+      ["4. KHUYẾN NGHỊ CHIẾN LƯỢC TỪ HỆ THỐNG / SYSTEM STRATEGIC RECOMMENDATIONS", ""],
+      ...results.recommendations.map((rec, i) => [`Khuyến nghị ${i + 1} / Advisory ${i + 1}`, rec.text])
     ];
 
     const csvContent = "\uFEFF" + rows.map(e => e.map(val => `"${val.toString().replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -167,7 +168,7 @@ export default function ROICalculator() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `KiemToan_ROI_LTV_${formData.courseName || 'Calculator'}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `KiemToan_Bilingual_ROI_${formData.courseName || 'Calculator'}_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -186,13 +187,13 @@ export default function ROICalculator() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 font-bold text-xs mb-6 uppercase tracking-wider shadow-sm animate-pulse">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>Hệ thống kiểm toán chi phí & Tái tuyển sinh (LTV) chuyên sâu</span>
+              <span>Hệ thống kiểm toán chi phí & Tái tuyển sinh (LTV) / Bilingual Course Auditor</span>
             </div>
             <h1 className="text-5xl font-black text-slate-900 tracking-tight sm:text-6xl mb-6 bg-clip-text text-transparent bg-gradient-to-br from-indigo-950 via-slate-800 to-slate-700 leading-tight">
               English Course <br className="sm:hidden" /> Cost & LTV Auditor
             </h1>
             <p className="max-w-2xl mx-auto text-lg text-slate-500 font-medium leading-relaxed">
-              Giải pháp kiểm toán đa chiều tích hợp trợ giảng, hao mòn tiện ích lớp học, chiết khấu ưu đãi học phí và giá trị vòng đời (LTV) trọn gói.
+              Giải pháp kiểm toán đa chiều tích hợp trợ giảng, hao mòn tiện ích lớp học, chiết khấu học phí và giá trị vòng đời (LTV) / Comprehensive bilingual course cost audit ledger.
             </p>
           </motion.div>
         </header>
@@ -207,9 +208,12 @@ export default function ROICalculator() {
               <div className="bg-slate-900 py-6 px-10 text-white flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Calculator className="w-6 h-6 text-indigo-400" />
-                  <span className="font-bold text-lg tracking-tight uppercase">Mẫu thông số chi phí mở rộng</span>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-base tracking-tight uppercase">Mẫu thông số chi phí mở rộng</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bilingual Cost Inputs</span>
+                  </div>
                 </div>
-                {!results && <span className="text-xs bg-slate-800 px-3 py-1.5 rounded-full text-slate-400 font-mono">Chuẩn LTV 2026</span>}
+                {!results && <span className="text-xs bg-slate-800 px-3 py-1.5 rounded-full text-slate-400 font-mono">Bilingual 2026</span>}
               </div>
 
               <form ref={formRef} onSubmit={handleSubmit} className="p-10 space-y-12">
@@ -218,12 +222,15 @@ export default function ROICalculator() {
                 <div className="space-y-6">
                   <div className="flex items-center gap-2 text-slate-800 border-l-4 border-indigo-500 pl-4">
                     <BookOpen className="w-5 h-5 text-indigo-600" />
-                    <h2 className="text-xl font-extrabold uppercase tracking-wide">Chi tiết khóa học & Học phí</h2>
+                    <div>
+                      <h2 className="text-xl font-extrabold uppercase tracking-wide">Chi tiết khóa học & Học phí</h2>
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Course Details & Tuition Pricing</p>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <Field label="Tên khóa học" name="courseName" required placeholder="VD: IELTS Premium" />
-                    <Field label="Học phí gốc danh nghĩa (VNĐ)" name="courseFeePerStudent" required type="number" placeholder="0" />
-                    <Field label="Sĩ số học viên tuyển sinh" name="totalStudents" required type="number" placeholder="0" />
+                    <Field label="Tên khóa học" subLabel="Course Name" name="courseName" required placeholder="VD: IELTS Premium" />
+                    <Field label="Học phí gốc danh nghĩa (VNĐ)" subLabel="Nominal Tuition (VND)" name="courseFeePerStudent" required type="number" placeholder="0" />
+                    <Field label="Sĩ số học viên tuyển sinh" subLabel="Target Enrollment" name="totalStudents" required type="number" placeholder="0" />
                   </div>
                 </div>
 
@@ -231,23 +238,26 @@ export default function ROICalculator() {
                 <div className="space-y-6">
                   <div className="flex items-center gap-2 text-slate-800 border-l-4 border-emerald-500 pl-4">
                     <Users className="w-5 h-5 text-emerald-600" />
-                    <h2 className="text-xl font-extrabold uppercase tracking-wide">Đội ngũ giảng dạy (Giáo viên chính & Trợ giảng)</h2>
+                    <div>
+                      <h2 className="text-xl font-extrabold uppercase tracking-wide">Đội ngũ giảng dạy</h2>
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider">Academic Staffing (Teachers & TAs)</p>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                     <div className="md:col-span-1">
-                      <Field label="Số buổi học" name="totalSessions" required type="number" placeholder="0" />
+                      <Field label="Số buổi học" subLabel="Sessions" name="totalSessions" required type="number" placeholder="0" />
                     </div>
                     <div className="md:col-span-1">
-                      <Field label="Giờ / buổi" name="hoursPerSession" required type="number" step="0.5" placeholder="0.0" />
+                      <Field label="Giờ / buổi" subLabel="Hours/Session" name="hoursPerSession" required type="number" step="0.5" placeholder="0.0" />
                     </div>
                     <div className="md:col-span-1.5">
-                      <Field label="Lương GV chính / giờ (VNĐ)" name="teacherSalaryPerHour" required type="number" placeholder="0" />
+                      <Field label="Lương GV chính / giờ (VNĐ)" subLabel="Main Teacher Wage" name="teacherSalaryPerHour" required type="number" placeholder="0" />
                     </div>
                     <div className="md:col-span-0.7">
-                      <Field label="Số trợ giảng/lớp" name="assistantsPerSession" type="number" placeholder="0" />
+                      <Field label="Số trợ giảng/lớp" subLabel="TAs per Class" name="assistantsPerSession" type="number" placeholder="0" />
                     </div>
                     <div className="md:col-span-1">
-                      <Field label="Lương trợ giảng/giờ (VNĐ)" name="assistantSalaryPerHour" type="number" placeholder="0" />
+                      <Field label="Lương trợ giảng/giờ (VNĐ)" subLabel="TA Wage (Hourly)" name="assistantSalaryPerHour" type="number" placeholder="0" />
                     </div>
                   </div>
                 </div>
@@ -257,16 +267,19 @@ export default function ROICalculator() {
                   <div className="space-y-6 bg-slate-50 p-6 rounded-2xl border border-slate-200">
                     <div className="flex items-center gap-3 text-slate-800">
                       <LayoutDashboard className="w-5 h-5 text-slate-600" />
-                      <h2 className="text-lg font-bold uppercase tracking-tight">Định phí cố định & Vận hành phòng</h2>
+                      <div>
+                        <h2 className="text-lg font-bold uppercase tracking-tight">Định phí cố định & Vận hành phòng</h2>
+                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Fixed Overhead & Classroom Utilities</p>
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 gap-5">
-                      <Field compact label="Mặt bằng / Phòng học thuê" name="fixedVenueCost" type="number" />
-                      <Field compact label="Thiết kế & in ấn học liệu cố định" name="fixedMaterialsCost" type="number" />
-                      <Field compact label="Phí nền tảng & công nghệ cố định" name="fixedTechnologyCost" type="number" />
-                      <Field compact label="Hành chính & Quản lý cơ sở" name="fixedAdminCost" type="number" />
+                      <Field compact label="Mặt bằng / Phòng học thuê" subLabel="Facility Rental" name="fixedVenueCost" type="number" />
+                      <Field compact label="Thiết kế & in ấn học liệu cố định" subLabel="Fixed Materials" name="fixedMaterialsCost" type="number" />
+                      <Field compact label="Phí nền tảng & công nghệ cố định" subLabel="Fixed Tech Software" name="fixedTechnologyCost" type="number" />
+                      <Field compact label="Hành chính & Quản lý cơ sở" subLabel="Admin Staff Overhead" name="fixedAdminCost" type="number" />
                       <div className="grid grid-cols-2 gap-4">
-                        <Field compact label="Điện nước mạng / giờ dạy" name="utilitiesPerHour" type="number" />
-                        <Field compact label="Khấu hao thiết bị / buổi học" name="depreciationPerSession" type="number" />
+                        <Field compact label="Điện nước mạng / giờ dạy" subLabel="Utilities / Hour" name="utilitiesPerHour" type="number" />
+                        <Field compact label="Khấu hao thiết bị / buổi học" subLabel="Depreciation / Session" name="depreciationPerSession" type="number" />
                       </div>
                     </div>
                   </div>
@@ -275,21 +288,24 @@ export default function ROICalculator() {
                   <div className="space-y-6 bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100">
                     <div className="flex items-center gap-3 text-indigo-900">
                       <CreditCard className="w-5 h-5 text-indigo-600" />
-                      <h2 className="text-lg font-bold uppercase tracking-tight">Biến phí học viên & Ưu đãi chiết khấu</h2>
+                      <div>
+                        <h2 className="text-lg font-bold uppercase tracking-tight">Biến phí học viên & Ưu đãi chiết khấu</h2>
+                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider">Variable Costs & Promotional Discounts</p>
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 gap-5">
                       <div className="grid grid-cols-2 gap-4">
-                        <Field compact label="Marketing chiêu sinh (CAC)/HV" name="varRecruitmentPerStudent" type="number" />
-                        <Field compact label="Giáo trình & Quà tặng / học viên" name="varMaterialsPerStudent" type="number" />
+                        <Field compact label="Marketing chiêu sinh (CAC)/HV" subLabel="Marketing CAC / Stud" name="varRecruitmentPerStudent" type="number" />
+                        <Field compact label="Giáo trình & Quà tặng / học viên" subLabel="Student Books & Gifts" name="varMaterialsPerStudent" type="number" />
                       </div>
                       <div className="grid grid-cols-3 gap-4">
-                        <Field compact label="LMS / học viên" name="varTechnologyPerStudent" type="number" />
-                        <Field compact label="Teabreak / học viên" name="varRefreshmentsPerStudent" type="number" />
-                        <Field compact label="Thu hộ GD / học viên" name="varTransactionFeePerStudent" type="number" />
+                        <Field compact label="LMS / học viên" subLabel="LMS / Student" name="varTechnologyPerStudent" type="number" />
+                        <Field compact label="Teabreak / học viên" subLabel="Teabreak / Stud" name="varRefreshmentsPerStudent" type="number" />
+                        <Field compact label="Thu hộ GD / học viên" subLabel="Trans Fee / Stud" name="varTransactionFeePerStudent" type="number" />
                       </div>
                       <div className="grid grid-cols-2 gap-4 pt-2 border-t border-indigo-100">
-                        <Field compact label="Chiết khấu giảm giá bình quân %" name="averageDiscountPercent" type="number" placeholder="0" />
-                        <Field compact label="Tỷ lệ học viên tái đăng ký %" name="expectedRetentionRate" type="number" placeholder="0" />
+                        <Field compact label="Chiết khấu giảm giá bình quân %" subLabel="Avg Promo Discount %" name="averageDiscountPercent" type="number" placeholder="0" />
+                        <Field compact label="Tỷ lệ học viên tái đăng ký %" subLabel="Expected Retention %" name="expectedRetentionRate" type="number" placeholder="0" />
                       </div>
                     </div>
                   </div>
@@ -309,7 +325,7 @@ export default function ROICalculator() {
                 <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-6">
                   <p className="text-sm text-slate-500 max-w-sm flex items-start gap-2 italic">
                     <Info className="w-4 h-4 shrink-0 mt-0.5 text-indigo-500" />
-                    Thuật toán sẽ tự động khấu trừ giảm giá để tính toán giá trị thực thu ròng và dự phóng LTV/CAC trọn đời học viên.
+                    Báo cáo kiểm toán sẽ hiển thị đồng thời cả thuật ngữ kinh tế Tiếng Việt và Tiếng Anh.
                   </p>
                   <button
                     type="submit"
@@ -320,7 +336,7 @@ export default function ROICalculator() {
                       <RefreshCcw className="w-6 h-6 animate-spin" />
                     ) : (
                       <>
-                        <span>Tính toán & Lập báo cáo kiểm toán</span>
+                        <span>Tính toán & Kiểm toán</span>
                         <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
@@ -349,9 +365,9 @@ export default function ROICalculator() {
                     <div>
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 rounded-full text-indigo-700 font-extrabold text-[10px] tracking-wider uppercase mb-3 shadow-sm">
                         <Activity className="w-3 h-3 text-indigo-500" />
-                        Điểm kiểm toán tài chính
+                        Điểm kiểm toán tài chính / Health Score
                       </span>
-                      <h4 className="text-base font-extrabold text-slate-500 uppercase tracking-wider">Health Rating</h4>
+                      <h4 className="text-base font-extrabold text-slate-500 uppercase tracking-wider">Financial Health</h4>
                     </div>
 
                     <div className="relative my-6 flex items-center justify-center">
@@ -383,7 +399,7 @@ export default function ROICalculator() {
                       </svg>
                       <div className="absolute flex flex-col items-center justify-center">
                         <span className="text-3xl font-black tracking-tight text-slate-900">{results.healthScore}</span>
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Điểm / 100</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Điểm / Score</span>
                       </div>
                     </div>
 
@@ -393,8 +409,8 @@ export default function ROICalculator() {
                       results.healthScore >= 50 ? "bg-amber-50 text-amber-700 border border-amber-100" :
                       "bg-rose-50 text-rose-700 border border-rose-100"
                     )}>
-                      {results.healthScore >= 80 ? "Hoạt động tối ưu" :
-                       results.healthScore >= 50 ? "Rủi ro trung bình" : "Báo động rủi ro cao"}
+                      {results.healthScore >= 80 ? "Hoạt động tối ưu / Optimal" :
+                       results.healthScore >= 50 ? "Rủi ro trung bình / Warning" : "Báo động rủi ro / Critical"}
                     </p>
                   </div>
 
@@ -408,30 +424,30 @@ export default function ROICalculator() {
                       <div>
                         <span className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 rounded-full text-indigo-400 font-extrabold text-[10px] tracking-wider uppercase mb-2">
                           <DollarSign className="w-3 h-3" />
-                          Học thuật & Tái đăng ký
+                          Học thuật & Tái đăng ký / Student Renewal
                         </span>
-                        <h3 className="text-lg font-bold text-slate-300">Giá trị vòng đời trọn đời (LTV)</h3>
+                        <h3 className="text-lg font-bold text-slate-300">Giá trị vòng đời học viên / Customer Lifetime Value (LTV)</h3>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Dự phóng LTV học viên</p>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Dự phóng LTV / LTV Forecast</p>
                         <p className="text-4xl font-black text-indigo-400 tracking-tight">{formatCurrency(results.customerLifetimeValue)}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6">
                       <div className="bg-slate-800/40 rounded-2xl p-4 border border-slate-800">
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Học phí thu ròng</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Học phí thu ròng / Net Tuition</span>
                         <span className="text-lg font-black text-slate-200">{formatCurrency(results.netFeePerStudent)}</span>
                         <span className="text-[9px] font-bold text-slate-400 block mt-0.5">Khấu trừ {formData.averageDiscountPercent || "0"}% ưu đãi</span>
                       </div>
                       <div className="bg-slate-800/40 rounded-2xl p-4 border border-slate-800">
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Tỷ lệ tái ký mong đợi</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Tỷ lệ tái ký / Renewal Rate</span>
                         <span className="text-lg font-black text-emerald-400">{formData.expectedRetentionRate || "0"}%</span>
-                        <span className="text-[9px] font-bold text-slate-400 block mt-0.5">Học tiếp cấp độ sau</span>
+                        <span className="text-[9px] font-bold text-slate-400 block mt-0.5">Đăng ký khóa tiếp theo</span>
                       </div>
                       <div className="bg-slate-800/40 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between">
                         <div>
-                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-0.5">Tỷ suất LTV / CAC</span>
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-0.5">Tỷ suất LTV / CAC Ratio</span>
                           <span className={cn(
                             "text-xl font-black tracking-tight block",
                             Number(formData.varRecruitmentPerStudent || 0) === 0 ? "text-slate-400" :
@@ -443,7 +459,7 @@ export default function ROICalculator() {
                         </div>
                         <span className="text-[8px] font-black uppercase text-slate-500 tracking-wider">
                           {Number(formData.varRecruitmentPerStudent || 0) > 0 
-                            ? (results.ltvCacRatio >= 5 ? "Tối ưu xuất sắc" : results.ltvCacRatio >= 3 ? "Đạt chuẩn tốt" : "Tuyển sinh đắt đỏ")
+                            ? (results.ltvCacRatio >= 5 ? "Tối ưu / Outstanding" : results.ltvCacRatio >= 3 ? "Đạt chuẩn / Healthy" : "Đắt đỏ / High CAC")
                             : "Bổ sung CAC đầu người"}
                         </span>
                       </div>
@@ -493,9 +509,9 @@ export default function ROICalculator() {
                               rec.type === "success" ? "text-emerald-700" :
                               "text-indigo-800"
                             )}>
-                              {rec.type === "warning" ? "Điểm cần khắc phục" :
-                               rec.type === "success" ? "Lợi thế cạnh tranh" :
-                               "Ý kiến đóng góp"}
+                              {rec.type === "warning" ? "Điểm cần khắc phục / Critical Risk" :
+                               rec.type === "success" ? "Lợi thế cạnh tranh / Optimizations" :
+                               "Ý kiến đóng góp / Advisory"}
                             </span>
                             <p className="text-slate-600 text-sm font-semibold leading-relaxed">
                               {rec.text}
@@ -554,21 +570,21 @@ export default function ROICalculator() {
                         <div className="flex items-center justify-between text-sm">
                           <div className="flex items-center gap-2.5">
                             <span className="w-4 h-4 bg-indigo-600 rounded-md shadow-sm shrink-0" />
-                            <span className="text-slate-600 font-bold">Chi phí giảng dạy (GV chính + TA)</span>
+                            <span className="text-slate-600 font-bold">Chi phí giảng dạy / Teaching Costs (GV + TA)</span>
                           </div>
                           <span className="font-extrabold text-slate-800 font-mono text-base">{results.teachingCostRatio.toFixed(1)}%</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <div className="flex items-center gap-2.5">
                             <span className="w-4 h-4 bg-emerald-500 rounded-md shadow-sm shrink-0" />
-                            <span className="text-slate-600 font-bold">Marketing tuyển sinh (MKT + CAC)</span>
+                            <span className="text-slate-600 font-bold">MKT Tuyển sinh / Acquisition (MKT + CAC)</span>
                           </div>
                           <span className="font-extrabold text-slate-800 font-mono text-base">{results.acquisitionCostRatio.toFixed(1)}%</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <div className="flex items-center gap-2.5">
                             <span className="w-4 h-4 bg-slate-500 rounded-md shadow-sm shrink-0" />
-                            <span className="text-slate-600 font-bold">Vận hành phòng học & khấu hao</span>
+                            <span className="text-slate-600 font-bold">Hao mòn lớp học / Classroom & Overhead</span>
                           </div>
                           <span className="font-extrabold text-slate-800 font-mono text-base">
                             {(100 - results.teachingCostRatio - results.acquisitionCostRatio).toFixed(1)}%
@@ -586,16 +602,19 @@ export default function ROICalculator() {
                     <div className="p-8 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <BarChart3 className="w-5 h-5 text-indigo-600" />
-                        <h3 className="text-lg font-black uppercase tracking-tight text-slate-800">Cân đối dòng tiền & Chi phí ròng</h3>
+                        <div className="flex flex-col">
+                          <h3 className="text-base font-black uppercase tracking-tight text-slate-800">Cân đối dòng tiền & Chi phí ròng</h3>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Financial Cash Flow Ledger</p>
+                        </div>
                       </div>
                     </div>
                     <div className="p-10 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10">
-                       <StatItem label="Chi phí trợ giảng (TA)" value={formatCurrency(results.assistantCost)} />
-                       <StatItem label="Hao mòn tiện ích lớp học" value={formatCurrency(results.classroomOverhead)} />
-                       <StatItem label="Định phí cố định tổng" value={formatCurrency(results.totalFixedCost)} />
-                       <StatItem label="Biến phí biến đổi tổng" value={formatCurrency(results.totalVariableCost)} />
-                       <StatItem label="Tổng chi phí tích lũy" value={formatCurrency(results.totalCost)} highlighted />
-                       <StatItem label="Doanh thu thực thu ròng" value={formatCurrency(results.totalRevenue)} highlighted />
+                       <StatItem label="Chi phí trợ giảng" subLabel="Assistant Cost (TA)" value={formatCurrency(results.assistantCost)} />
+                       <StatItem label="Khấu hao tiện ích phòng" subLabel="Classroom Wear & Utilities" value={formatCurrency(results.classroomOverhead)} />
+                       <StatItem label="Định phí cố định tổng" subLabel="Total Fixed Cost" value={formatCurrency(results.totalFixedCost)} />
+                       <StatItem label="Biến phí biến đổi tổng" subLabel="Total Variable Cost" value={formatCurrency(results.totalVariableCost)} />
+                       <StatItem label="Tổng chi phí tích lũy" subLabel="Total Invested Cost" value={formatCurrency(results.totalCost)} highlighted />
+                       <StatItem label="Doanh thu thực thu ròng" subLabel="Net Tuition Revenue" value={formatCurrency(results.totalRevenue)} highlighted />
                     </div>
                   </div>
 
@@ -604,15 +623,21 @@ export default function ROICalculator() {
                     <div className="p-8 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Percent className="w-5 h-5 text-emerald-600" />
-                        <h3 className="text-lg font-black uppercase tracking-tight text-slate-800">Chỉ số đo lường hiệu suất (KPIs)</h3>
+                        <div className="flex flex-col">
+                          <h3 className="text-base font-black uppercase tracking-tight text-slate-800">Chỉ số đo lường hiệu suất (KPIs)</h3>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Financial Indicators & Ratios</p>
+                        </div>
                       </div>
                     </div>
                     <div className="p-10 space-y-6">
-                      <MetricRow label="Ngưỡng học viên hòa vốn" value={results.breakEvenStudents.toFixed(1)} suffix="Học viên" />
-                      <MetricRow label="Doanh thu hòa vốn thực tế" value={formatCurrency(results.breakEvenRevenue)} />
+                      <MetricRow label="Ngưỡng học viên hòa vốn" subLabel="Break-even Enrollment" value={results.breakEvenStudents.toFixed(1)} suffix="Học viên" suffixEn="Students" />
+                      <MetricRow label="Doanh thu hòa vốn thực tế" subLabel="Break-even Revenue Threshold" value={formatCurrency(results.breakEvenRevenue)} />
                       
                       <div className="flex items-center justify-between py-2.5 border-b border-slate-100 px-2 -mx-2 hover:bg-slate-50 rounded-lg">
-                        <span className="text-slate-500 font-bold tracking-tight">Biên an toàn tài chính (Safety Margin)</span>
+                        <div className="flex flex-col">
+                          <span className="text-slate-600 text-xs font-bold tracking-tight">Biên an toàn tài chính</span>
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5">Financial Safety Margin</span>
+                        </div>
                         <div className="flex items-center gap-2">
                           <span className={cn(
                             "text-2xl font-black tracking-tighter animate-pulse",
@@ -624,11 +649,11 @@ export default function ROICalculator() {
                         </div>
                       </div>
 
-                      <MetricRow label="Tỷ suất lợi nhuận đóng góp (CMR)" value={`${results.contributionMarginRatio.toFixed(1)}%`} />
-                      <MetricRow label="Độ lớn đòn bẩy vận hành (DOL)" value={results.operatingLeverage.toFixed(2)} />
-                      <MetricRow label="Tổng chi phí phân bổ / Học viên" value={formatCurrency(results.costPerStudent)} />
-                      <MetricRow label="Lợi nhuận đóng góp / Học viên" value={formatCurrency(results.marginPerStudent)} />
-                      <MetricRow label="Doanh thu / Giờ GV đứng lớp" value={formatCurrency(results.revenuePerInstructorHour)} />
+                      <MetricRow label="Tỷ suất lợi nhuận đóng góp (CMR)" subLabel="Contribution Margin Ratio (CMR)" value={`${results.contributionMarginRatio.toFixed(1)}%`} />
+                      <MetricRow label="Độ lớn đòn bẩy vận hành" subLabel="Degree of Operating Leverage (DOL)" value={results.operatingLeverage.toFixed(2)} />
+                      <MetricRow label="Tổng chi phí phân bổ / Học viên" subLabel="Invested Cost per Student" value={formatCurrency(results.costPerStudent)} />
+                      <MetricRow label="Lợi nhuận đóng góp / Học viên" subLabel="Contribution Margin per Student" value={formatCurrency(results.marginPerStudent)} />
+                      <MetricRow label="Doanh thu / Giờ GV đứng lớp" subLabel="Revenue per Class-Hour (RevPCH)" value={formatCurrency(results.revenuePerInstructorHour)} />
                     </div>
                   </div>
                 </div>
@@ -640,7 +665,7 @@ export default function ROICalculator() {
                     className="w-full sm:w-auto group flex items-center justify-center gap-4 py-6 px-12 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl text-xl font-black text-white hover:bg-indigo-600 transition-all duration-300 transform active:scale-95"
                    >
                      <Download className="w-6 h-6 text-indigo-400 group-hover:text-white transition-colors" />
-                     Tải báo cáo kiểm toán nâng cao (CSV)
+                     Xuất báo cáo kiểm toán song ngữ (CSV)
                    </button>
                    <button
                     onClick={() => { 
@@ -668,6 +693,7 @@ export default function ROICalculator() {
 
 interface FieldProps {
   label: string;
+  subLabel?: string;
   name: string;
   id?: string;
   type?: string;
@@ -677,18 +703,19 @@ interface FieldProps {
   compact?: boolean;
 }
 
-function Field({ label, name, id, type = "text", required, placeholder, step, compact }: FieldProps) {
+function Field({ label, subLabel, name, id, type = "text", required, placeholder, step, compact }: FieldProps) {
   const inputId = id || name;
   return (
     <div className="flex flex-col gap-2 group">
       <label 
         htmlFor={inputId}
         className={cn(
-          "font-extrabold text-slate-700 tracking-tight transition-colors group-focus-within:text-indigo-600",
-          compact ? "text-xs" : "text-sm"
+          "font-extrabold text-slate-700 tracking-tight transition-colors group-focus-within:text-indigo-600 flex items-baseline justify-between gap-2",
+          compact ? "text-[11px]" : "text-xs"
         )}
       >
-        {label} {required && <span className="text-rose-500">*</span>}
+        <span>{label} {required && <span className="text-rose-500">*</span>}</span>
+        {subLabel && <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest shrink-0">{subLabel}</span>}
       </label>
       <input
         id={inputId}
@@ -708,16 +735,20 @@ function Field({ label, name, id, type = "text", required, placeholder, step, co
 
 interface StatItemProps {
   label: string;
+  subLabel?: string;
   value: string;
   highlighted?: boolean;
 }
 
-function StatItem({ label, value, highlighted }: StatItemProps) {
+function StatItem({ label, subLabel, value, highlighted }: StatItemProps) {
   return (
     <div className="space-y-1">
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-baseline justify-between gap-2">
+        <span>{label}</span>
+      </p>
+      {subLabel && <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider -mt-1">{subLabel}</p>}
       <p className={cn(
-        "font-black tracking-tight leading-none",
+        "font-black tracking-tight leading-none pt-1",
         highlighted ? "text-slate-900 text-2xl sm:text-3xl" : "text-slate-600 text-xl sm:text-2xl"
       )}>
         {value}
@@ -728,19 +759,29 @@ function StatItem({ label, value, highlighted }: StatItemProps) {
 
 interface MetricRowProps {
   label: string;
+  subLabel?: string;
   value: string;
   suffix?: string;
+  suffixEn?: string;
 }
 
-function MetricRow({ label, value, suffix }: MetricRowProps) {
+function MetricRow({ label, subLabel, value, suffix, suffixEn }: MetricRowProps) {
   return (
     <div className="flex items-center justify-between group py-2.5 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors rounded-lg px-2 -mx-2">
-      <span className="text-slate-500 text-xs font-bold tracking-tight">{label}</span>
+      <div className="flex flex-col">
+        <span className="text-slate-600 text-xs font-bold tracking-tight">{label}</span>
+        {subLabel && <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5 leading-none">{subLabel}</span>}
+      </div>
       <div className="flex items-baseline gap-1.5">
         <span className="text-xl font-black text-slate-900 tracking-tighter group-hover:text-indigo-600 transition-colors">
           {value}
         </span>
-        {suffix && <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">{suffix}</span>}
+        {suffix && (
+          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none flex flex-col items-end">
+            <span>{suffix}</span>
+            {suffixEn && <span className="text-[6px] opacity-75">{suffixEn}</span>}
+          </span>
+        )}
       </div>
     </div>
   );

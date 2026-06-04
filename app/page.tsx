@@ -24,7 +24,11 @@ import {
   DollarSign,
   Layers,
   ArrowUpRight,
-  XCircle
+  XCircle,
+  Briefcase,
+  Building,
+  Clock,
+  Coins
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx, type ClassValue } from "clsx";
@@ -34,6 +38,9 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// ==========================================
+// B2C INTERFACES & PRESETS
+// ==========================================
 interface Recommendation {
   type: "warning" | "info" | "success";
   text: string;
@@ -71,7 +78,6 @@ interface Results {
   recommendations: Recommendation[];
 }
 
-// 2026 Sleek High-Fidelity Course Presets
 const COURSE_PRESETS = {
   ielts: {
     courseName: "IELTS Mastery Advanced",
@@ -144,7 +150,106 @@ const COURSE_PRESETS = {
   }
 };
 
+// ==========================================
+// B2B INTERFACES & PRESETS
+// ==========================================
+interface B2BRecommendation {
+  type: "warning" | "info" | "success";
+  text: string;
+}
+
+interface B2BResults {
+  totalTeachingCost: number;
+  totalCustomAndLogisticsCost: number;
+  totalMaterialsCost: number;
+  totalCostOfDelivery: number;
+  grossRevenue: number;
+  netRevenue: number;
+  netProfit: number;
+  profitMarginPercent: number;
+  breakEvenValue: number;
+  clientYearlyProductivitySavings: number;
+  clientRoiPercent: number;
+  healthScore: number;
+  recommendations: B2BRecommendation[];
+  hoursPerSession: number;
+}
+
+const B2B_PRESETS = {
+  it_corp: {
+    clientName: "FPT Software",
+    industry: "Công nghệ thông tin (IT)",
+    totalClasses: "2",
+    totalStudents: "28",
+    hoursPerClass: "60",
+    sessionsPerClass: "30",
+    teacherType: "expat",
+    teacherSalaryPerHour: "480000",
+    assistantsPerSession: "1",
+    assistantSalaryPerHour: "80000",
+    pricingModel: "hourly",
+    pricingValue: "1350000",
+    partnerDiscountPercent: "10",
+    syllabusCustomizationCost: "4500000",
+    materialsCostPerStudent: "220000",
+    placementTestCostPerStudent: "150005",
+    travelAllowancePerSession: "50000",
+    accountManagerCost: "1200000",
+    avgEmployeeSalaryMonthly: "18000000",
+    estProductivityGainPercent: "3.5"
+  },
+  hospitality: {
+    clientName: "Vinpearl Resort",
+    industry: "Khách sạn & Dịch vụ (Hospitality)",
+    totalClasses: "3",
+    totalStudents: "45",
+    hoursPerClass: "40",
+    sessionsPerClass: "20",
+    teacherType: "local",
+    teacherSalaryPerHour: "280000",
+    assistantsPerSession: "2",
+    assistantSalaryPerHour: "60000",
+    pricingModel: "package",
+    pricingValue: "165000000",
+    partnerDiscountPercent: "15",
+    syllabusCustomizationCost: "6000000",
+    materialsCostPerStudent: "150000",
+    placementTestCostPerStudent: "100000",
+    travelAllowancePerSession: "80000",
+    accountManagerCost: "2000000",
+    avgEmployeeSalaryMonthly: "12000000",
+    estProductivityGainPercent: "4.0"
+  },
+  executive: {
+    clientName: "Vietcombank",
+    industry: "Tài chính - Ngân hàng (Finance)",
+    totalClasses: "1",
+    totalStudents: "8",
+    hoursPerClass: "48",
+    sessionsPerClass: "24",
+    teacherType: "native",
+    teacherSalaryPerHour: "650000",
+    assistantsPerSession: "0",
+    assistantSalaryPerHour: "0",
+    pricingModel: "per_student",
+    pricingValue: "15000000",
+    partnerDiscountPercent: "5",
+    syllabusCustomizationCost: "12000000",
+    materialsCostPerStudent: "500000",
+    placementTestCostPerStudent: "250000",
+    travelAllowancePerSession: "100000",
+    accountManagerCost: "3000000",
+    avgEmployeeSalaryMonthly: "35000000",
+    estProductivityGainPercent: "6.0"
+  }
+};
+
 export default function ROICalculator() {
+  const [activeTab, setActiveTab] = useState<"b2c" | "b2b">("b2c");
+
+  // ==========================================
+  // B2C STATE & HANDLERS
+  // ==========================================
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
@@ -153,13 +258,11 @@ export default function ROICalculator() {
   const formRef = useRef<HTMLFormElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Dynamic state for controlled visual preset switching
   const applyPreset = (key: keyof typeof COURSE_PRESETS) => {
     setActivePreset(key);
     const data = COURSE_PRESETS[key];
     setFormData(data);
     
-    // Explicitly update individual inputs inside the DOM
     if (formRef.current) {
       Object.entries(data).forEach(([name, value]) => {
         const input = formRef.current?.querySelector(`[name="${name}"]`) as HTMLInputElement;
@@ -205,9 +308,6 @@ export default function ROICalculator() {
       setLoading(false);
     }
   };
-
-  const formatCurrency = (num: number) => 
-    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
 
   const downloadCSV = () => {
     if (!results) return;
@@ -270,20 +370,160 @@ export default function ROICalculator() {
     document.body.removeChild(link);
   };
 
-  return (
-    <main className="min-h-screen py-20 px-4 sm:px-8 selection:bg-indigo-500/30 selection:text-white relative overflow-hidden">
+  // ==========================================
+  // B2B STATE & HANDLERS
+  // ==========================================
+  const [b2bLoading, setB2BLoading] = useState(false);
+  const [b2bResults, setB2BResults] = useState<B2BResults | null>(null);
+  const [b2bFormData, setB2BFormData] = useState<Record<string, string>>({});
+  const [b2bError, setB2BError] = useState<string | null>(null);
+  const [b2bActivePreset, setB2BActivePreset] = useState<string>("");
+  const b2bFormRef = useRef<HTMLFormElement>(null);
+  const b2bResultsRef = useRef<HTMLDivElement>(null);
+
+  const applyB2BPreset = (key: keyof typeof B2B_PRESETS) => {
+    setB2BActivePreset(key);
+    const data = B2B_PRESETS[key];
+    setB2BFormData(data);
+    
+    if (b2bFormRef.current) {
+      Object.entries(data).forEach(([name, value]) => {
+        const input = b2bFormRef.current?.querySelector(`[name="${name}"]`) as HTMLInputElement;
+        if (input) {
+          input.value = value;
+        }
+        const select = b2bFormRef.current?.querySelector(`[name="${name}"]`) as HTMLSelectElement;
+        if (select) {
+          select.value = value;
+        }
+      });
+    }
+    setB2BError(null);
+  };
+
+  const handleB2BSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setB2BLoading(true);
+    setB2BError(null);
+
+    const form = e.currentTarget;
+    const rawData = new FormData(form);
+    const data = Object.fromEntries(rawData.entries()) as Record<string, string>;
+    setB2BFormData(data);
+
+    try {
+      const res = await fetch("/api/calculate-b2b", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const resJson = await res.json();
       
-      {/* 1. Futuristic Ambient Glowing Orbs */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none bg-[#03050c]">
+      if (!res.ok) {
+        throw new Error(resJson.error || "Tính toán thất bại");
+      }
+      
+      setB2BResults(resJson.data);
+      
+      setTimeout(() => {
+        b2bResultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    } catch (err: any) {
+      setB2BError(err.message || "Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin nhập vào.");
+    } finally {
+      setB2BLoading(false);
+    }
+  };
+
+  const downloadB2BCSV = () => {
+    if (!b2bResults || !b2bFormData) return;
+
+    const rows = [
+      ["BÁO CÁO THẨM ĐỊNH TÀI CHÍNH & ROI DỰ ÁN B2B / B2B PROPOSAL & CLIENT ROI AUDIT REPORT", ""],
+      ["Doanh nghiệp khách hàng / Client Name", b2bFormData.clientName || ""],
+      ["Ngành nghề / Industry", b2bFormData.industry || ""],
+      ["Ngày kiểm toán / Audit Date", new Date().toLocaleDateString("vi-VN")],
+      ["", ""],
+      ["1. THÔNG SỐ GÓI THẦU & VẬN HÀNH / PROPOSAL & OPERATIONS PARAMETERS", ""],
+      ["Quy mô lớp học / Total Classes", b2bFormData.totalClasses || "0"],
+      ["Tổng số học viên đào tạo / Total Students", b2bFormData.totalStudents || "0"],
+      ["Thời lượng học mỗi lớp (Giờ) / Hours per Class", b2bFormData.hoursPerClass || "0"],
+      ["Số buổi học mỗi lớp / Sessions per Class", b2bFormData.sessionsPerClass || "0"],
+      ["Phân khúc giáo viên / Teacher Segment", b2bFormData.teacherType || ""],
+      ["Lương giáo viên (Giờ) / Teacher Hourly Wage", b2bFormData.teacherSalaryPerHour || "0"],
+      ["Số trợ giảng/buổi / TAs per Session", b2bFormData.assistantsPerSession || "0"],
+      ["Lương trợ giảng (Giờ) / TA Hourly Wage", b2bFormData.assistantSalaryPerHour || "0"],
+      ["", ""],
+      ["2. CÂN ĐỐI TÀI CHÍNH NHÀ CUNG CẤP (VNĐ) / PROVIDER FINANCIAL AUDIT (VND)", ""],
+      ["Chi phí giảng dạy chính / Total Teaching Cost", b2bResults.totalTeachingCost],
+      ["Chi phí vận hành tùy chỉnh & Logistics / Logistics & Customization Cost", b2bResults.totalCustomAndLogisticsCost],
+      ["Chi phí học liệu học viên / Total Materials Cost", b2bResults.totalMaterialsCost],
+      ["TỔNG CHI PHÍ VẬN HÀNH DỰ ÁN / TOTAL DELIVERY COST", b2bResults.totalCostOfDelivery],
+      ["Tổng giá trị gói thầu (Gross) / Gross Revenue", b2bResults.grossRevenue],
+      ["Doanh thu thuần ròng (Net) / Net Revenue", b2bResults.netRevenue],
+      ["LỢI NHUẬN RÒNG DỰ ÁN / NET PROFIT", b2bResults.netProfit],
+      ["Tỷ suất lợi nhuận gộp (%) / Gross Margin %", `${b2bResults.profitMarginPercent.toFixed(1)}%`],
+      ["Đơn giá hòa vốn ròng / Break-even Pricing Unit Value", b2bResults.breakEvenValue],
+      ["Điểm sức khỏe dự án / Proposal Health Score", b2bResults.healthScore],
+      ["", ""],
+      ["3. DỰ PHÓNG ROI KHÁCH HÀNG / CLIENT-SIDE VALUE & ROI PROJECTIONS", ""],
+      ["Lương trung bình nhân sự (Tháng) / Avg Monthly Salary", b2bFormData.avgEmployeeSalaryMonthly || "0"],
+      ["Tiết kiệm năng suất kỳ vọng (%) / Est. Productivity Gain %", `${b2bFormData.estProductivityGainPercent || "0"}%`],
+      ["Giá trị năng suất tiết kiệm / Annual Productivity Savings", b2bResults.clientYearlyProductivitySavings],
+      ["Hiệu quả đầu tư (ROI doanh nghiệp %) / Client Investment ROI %", `${b2bResults.clientRoiPercent.toFixed(1)}%`],
+      ["", ""],
+      ["4. KHUYẾN NGHỊ CHIẾN LƯỢC TỪ HỆ THỐNG / SYSTEM STRATEGIC RECOMMENDATIONS", ""],
+      ...b2bResults.recommendations.map((rec, i) => [`Khuyến nghị ${i + 1} / Advisory ${i + 1}`, rec.text])
+    ];
+
+    const csvContent = "\uFEFF" + rows.map(e => e.map(val => `"${val.toString().replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `BaoCao_ThamDinh_B2B_${b2bFormData.clientName || 'Proposal'}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const formatCurrency = (num: number) => 
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
+
+  const getB2BPricingModelLabel = (model: string) => {
+    switch (model) {
+      case "hourly": return "Giờ dạy / Hour";
+      case "package": return "Gói thầu / Package";
+      case "per_student": return "Học viên / Student";
+      default: return "";
+    }
+  };
+
+  const getB2BTeacherTypeLabel = (type: string) => {
+    switch (type) {
+      case "local": return "Giáo viên VN / Local";
+      case "expat": return "Bản xứ / Expat";
+      case "native": return "Bản ngữ / NES";
+      default: return "";
+    }
+  };
+
+  return (
+    <main className="min-h-screen py-20 px-4 sm:px-8 selection:bg-indigo-500/30 selection:text-white relative overflow-hidden bg-[#03050c]">
+      
+      {/* Futuristic Ambient Glowing Orbs */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute top-[-15%] left-[-10%] w-[650px] h-[650px] rounded-full bg-indigo-600/10 blur-[130px] opacity-75 animate-orb-slow-1" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[550px] h-[550px] rounded-full bg-emerald-500/8 blur-[110px] opacity-70 animate-orb-slow-2" />
         <div className="absolute top-[40%] right-[15%] w-[480px] h-[480px] rounded-full bg-violet-500/6 blur-[120px] opacity-60 animate-orb-slow-3" />
       </div>
 
-      <div className="max-w-6xl mx-auto space-y-16">
+      <div className="max-w-6xl mx-auto space-y-12">
         
         {/* Header Section */}
-        <header className="text-center relative">
+        <header className="text-center relative space-y-4">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -298,644 +538,1212 @@ export default function ROICalculator() {
             
             {/* Shimmer Neon Title */}
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl pt-2 pb-1 bg-gradient-to-r from-white via-slate-100 to-indigo-300 bg-clip-text text-transparent leading-none">
-              English Course <br className="sm:hidden" /> Cost & LTV Auditor
+              English Course <br className="sm:hidden" /> Cost & ROI Auditor
             </h1>
             
             <p className="max-w-3xl mx-auto text-sm sm:text-base text-slate-400 font-medium leading-relaxed">
-              Giải pháp kiểm toán giáo dịch đa chiều. Tích hợp định phí trợ giảng, hao mòn utilities lớp học, chiết khấu và giá trị vòng đời LTV.
+              Hệ thống mô phỏng hiệu suất tài chính đào tạo tiếng Anh. Kiểm toán định phí, LTV, tỷ lệ tái ký cho cả B2C và các gói thầu B2B.
             </p>
           </motion.div>
         </header>
 
-        <div className="grid grid-cols-1 gap-12">
-          
-          {/* Main Input Form Glass Panel */}
-          <motion.div 
-            layout
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="glass-panel rounded-[2.25rem] shadow-2xl overflow-hidden border border-white/5 relative"
-          >
-            {/* Satin Finish Card Header */}
-            <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-white/5 py-6 px-8 sm:px-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="flex items-center gap-3.5">
-                <div className="p-2.5 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 shadow-inner">
-                  <Calculator className="w-6 h-6 text-indigo-400" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-extrabold text-white text-base tracking-tight uppercase">Mẫu thông số chi phí mở rộng</span>
-                  <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mt-0.5">Bilingual Cost Parameters Matrix</span>
-                </div>
-              </div>
-              
-              {/* Quick Course Presets HUD */}
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden lg:inline-block">Chọn nhanh hồ sơ / Presets:</span>
-                <button
-                  type="button"
-                  onClick={() => applyPreset("ielts")}
-                  className={cn(
-                    "text-[10px] font-black px-3.5 py-2 rounded-xl transition-all duration-300 border cursor-pointer",
-                    activePreset === "ielts" 
-                      ? "bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 scale-105" 
-                      : "bg-slate-950/60 text-slate-300 border-white/5 hover:border-indigo-500/30 hover:bg-slate-900/60"
-                  )}
-                >
-                  IELTS Mastery
-                </button>
-                <button
-                  type="button"
-                  onClick={() => applyPreset("kids")}
-                  className={cn(
-                    "text-[10px] font-black px-3.5 py-2 rounded-xl transition-all duration-300 border cursor-pointer",
-                    activePreset === "kids" 
-                      ? "bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 scale-105" 
-                      : "bg-slate-950/60 text-slate-300 border-white/5 hover:border-indigo-500/30 hover:bg-slate-900/60"
-                  )}
-                >
-                  Kids Starter
-                </button>
-                <button
-                  type="button"
-                  onClick={() => applyPreset("general")}
-                  className={cn(
-                    "text-[10px] font-black px-3.5 py-2 rounded-xl transition-all duration-300 border cursor-pointer",
-                    activePreset === "general" 
-                      ? "bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 scale-105" 
-                      : "bg-slate-950/60 text-slate-300 border-white/5 hover:border-indigo-500/30 hover:bg-slate-900/60"
-                  )}
-                >
-                  Communication
-                </button>
-              </div>
-            </div>
-
-            {/* Form body */}
-            <form ref={formRef} onSubmit={handleSubmit} className="p-8 sm:p-10 space-y-12">
-              
-              {/* Form Section 1: Course Details */}
-              <div className="space-y-6 bg-white/[0.01] p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300 shadow-inner">
-                <div className="flex items-center gap-3 text-slate-200 border-l-4 border-indigo-500 pl-4">
-                  <BookOpen className="w-5 h-5 text-indigo-400" />
-                  <div>
-                    <h2 className="text-base font-extrabold uppercase tracking-wider leading-tight text-white">Chi tiết khóa học & Học phí</h2>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Course Details & Tuition Pricing</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                  <Field label="Tên khóa học" subLabel="Course Name" name="courseName" required placeholder="VD: IELTS Premium" defaultValue={formData.courseName} />
-                  <Field label="Học phí gốc danh nghĩa (VNĐ)" subLabel="Nominal Tuition (VND)" name="courseFeePerStudent" required type="number" placeholder="0" defaultValue={formData.courseFeePerStudent} />
-                  <Field label="Sĩ số học viên tuyển sinh" subLabel="Target Enrollment" name="totalStudents" required type="number" placeholder="0" defaultValue={formData.totalStudents} />
-                </div>
-              </div>
-
-              {/* Form Section 2: Staffing (Teacher & TA) */}
-              <div className="space-y-6 bg-white/[0.01] p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300 shadow-inner">
-                <div className="flex items-center gap-3 text-slate-200 border-l-4 border-emerald-500 pl-4">
-                  <Users className="w-5 h-5 text-emerald-400" />
-                  <div>
-                    <h2 className="text-base font-extrabold uppercase tracking-wider leading-tight text-white">Đội ngũ giảng dạy</h2>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Academic Staffing (Teachers & TAs)</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 pt-2">
-                  <Field label="Số buổi học" subLabel="Sessions" name="totalSessions" required type="number" placeholder="0" defaultValue={formData.totalSessions} />
-                  <Field label="Giờ / buổi" subLabel="Hours/Session" name="hoursPerSession" required type="number" step="0.5" placeholder="0.0" defaultValue={formData.hoursPerSession} />
-                  <Field label="Lương GV chính / giờ (VNĐ)" subLabel="Main Teacher Wage" name="teacherSalaryPerHour" required type="number" placeholder="0" defaultValue={formData.teacherSalaryPerHour} />
-                  <Field label="Số trợ giảng/lớp" subLabel="TAs per Class" name="assistantsPerSession" type="number" placeholder="0" defaultValue={formData.assistantsPerSession} />
-                  <Field label="Lương trợ giảng/giờ (VNĐ)" subLabel="TA Wage (Hourly)" name="assistantSalaryPerHour" type="number" placeholder="0" defaultValue={formData.assistantSalaryPerHour} />
-                </div>
-              </div>
-
-              {/* Form Section 3 & 4 Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                
-                {/* Left Form: Overhead */}
-                <div className="space-y-6 bg-white/[0.01] p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300">
-                  <div className="flex items-center gap-3 text-slate-200 border-l-4 border-violet-500 pl-4">
-                    <LayoutDashboard className="w-5 h-5 text-violet-400" />
-                    <div>
-                      <h2 className="text-base font-extrabold uppercase tracking-wider text-white leading-tight">Định phí cố định & Vận hành phòng</h2>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Fixed Overhead & Classroom Utilities</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 gap-5 pt-2">
-                    <Field compact label="Mặt bằng / Phòng học thuê" subLabel="Facility Rental" name="fixedVenueCost" type="number" defaultValue={formData.fixedVenueCost} />
-                    <Field compact label="Thiết kế & in ấn học liệu cố định" subLabel="Fixed Materials" name="fixedMaterialsCost" type="number" defaultValue={formData.fixedMaterialsCost} />
-                    <Field compact label="Phí nền tảng & công nghệ cố định" subLabel="Fixed Tech Software" name="fixedTechnologyCost" type="number" defaultValue={formData.fixedTechnologyCost} />
-                    <Field compact label="Hành chính & Quản lý cơ sở" subLabel="Admin Staff Overhead" name="fixedAdminCost" type="number" defaultValue={formData.fixedAdminCost} />
-                    <div className="grid grid-cols-2 gap-4">
-                      <Field compact label="Điện nước mạng / giờ dạy" subLabel="Utilities / Hour" name="utilitiesPerHour" type="number" defaultValue={formData.utilitiesPerHour} />
-                      <Field compact label="Khấu hao thiết bị / buổi học" subLabel="Depreciation / Session" name="depreciationPerSession" type="number" defaultValue={formData.depreciationPerSession} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Form: Variable costs & CAC */}
-                <div className="space-y-6 bg-indigo-950/10 p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300">
-                  <div className="flex items-center gap-3 text-slate-200 border-l-4 border-indigo-400 pl-4">
-                    <CreditCard className="w-5 h-5 text-indigo-400" />
-                    <div>
-                      <h2 className="text-base font-extrabold uppercase tracking-wider text-white leading-tight">Biến phí học viên & Ưu đãi chiết khấu</h2>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Variable Costs & Promotional Discounts</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 gap-5 pt-2">
-                    <Field compact label="Chi phí Marketing trên mỗi học viên" subLabel="Marketing per Student (CAC)" name="varRecruitmentPerStudent" type="number" defaultValue={formData.varRecruitmentPerStudent} />
-                    <Field compact label="Đầu tư cho Quản lý / Định phí Marketing" subLabel="Fixed Marketing Budget" name="fixedMarketingCost" type="number" defaultValue={formData.fixedMarketingCost} />
-                    <div className="grid grid-cols-2 gap-4">
-                      <Field compact label="Giáo trình & Quà tặng / học viên" subLabel="Student Books & Gifts" name="varMaterialsPerStudent" type="number" defaultValue={formData.varMaterialsPerStudent} />
-                      <Field compact label="LMS / học viên" subLabel="LMS / Student" name="varTechnologyPerStudent" type="number" defaultValue={formData.varTechnologyPerStudent} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Field compact label="Biến phí khác / học viên" subLabel="Other Variable / Student" name="varOtherPerStudent" type="number" defaultValue={formData.varOtherPerStudent} />
-                      <div className="hidden"></div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
-                      <Field compact label="Chiết khấu giảm giá bình quân %" subLabel="Avg Promo Discount %" name="averageDiscountPercent" type="number" placeholder="0" defaultValue={formData.averageDiscountPercent} />
-                      <Field compact label="Tỷ lệ học viên tái đăng ký %" subLabel="Expected Retention %" name="expectedRetentionRate" type="number" placeholder="0" defaultValue={formData.expectedRetentionRate} />
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Server Error Alert Box */}
-              {error && (
-                <motion.div 
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="bg-rose-950/30 border border-rose-500/20 text-rose-200 px-6 py-4 rounded-2xl flex items-center gap-3.5 shadow-lg"
-                >
-                  <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
-                  <span className="font-semibold text-sm leading-relaxed">{error}</span>
-                </motion.div>
+        {/* Tab Switcher HUD */}
+        <div className="flex justify-center">
+          <div className="bg-slate-950/60 p-1.5 rounded-2xl border border-white/5 flex gap-1.5 backdrop-blur-md shadow-2xl relative">
+            <button
+              onClick={() => {
+                setActiveTab("b2c");
+                setError(null);
+              }}
+              className={cn(
+                "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 relative cursor-pointer",
+                activeTab === "b2c" 
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 scale-105" 
+                  : "text-slate-400 hover:text-white"
               )}
-
-              {/* Footer Form Button Row */}
-              <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
-                <p className="text-xs text-slate-400 max-w-sm flex items-start gap-2.5 italic">
-                  <Info className="w-4 h-4 shrink-0 mt-0.5 text-indigo-400 animate-pulse" />
-                  <span>Báo cáo kiểm toán hiển thị trực quan đồng thời cả thuật ngữ kinh tế Việt - Anh.</span>
-                </p>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full sm:w-auto group relative inline-flex items-center justify-center gap-3 py-4 px-10 border border-indigo-400/20 rounded-2xl shadow-xl text-lg font-black text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all duration-300 transform active:scale-95 disabled:opacity-50 cursor-pointer"
-                >
-                  {loading ? (
-                    <RefreshCcw className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <span>Tính toán & Kiểm toán</span>
-                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </motion.div>
+            >
+              B2C Public Courses
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("b2b");
+                setB2BError(null);
+              }}
+              className={cn(
+                "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 relative cursor-pointer",
+                activeTab === "b2b" 
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 scale-105" 
+                  : "text-slate-400 hover:text-white"
+              )}
+            >
+              B2B Corporate Proposals
+            </button>
+          </div>
         </div>
 
-        {/* Bento Results Dashboard */}
-        <AnimatePresence>
-          {results && (
+        {/* ==========================================
+            TAB CONTENT: B2C (PUBLIC COURSES)
+            ========================================== */}
+        {activeTab === "b2c" && (
+          <div className="space-y-12">
+            {/* Main Input Form Glass Panel */}
             <motion.div 
-              ref={resultsRef}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-              className="space-y-12 pb-24"
+              layout
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="glass-panel rounded-[2.25rem] shadow-2xl overflow-hidden border border-white/5 relative"
             >
-              
-              {/* Results Bento Row 1: Circular Health Score HUD & LTV renewal metrics */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                
-                {/* 1. Health Score Circular Dashboard HUD (4 Cols) */}
-                <div className="lg:col-span-4 glass-panel rounded-[2.25rem] p-8 flex flex-col items-center justify-between text-center relative overflow-hidden border border-white/5 group">
-                  <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                    <Activity className="w-28 h-28 text-white" />
+              {/* Satin Finish Card Header */}
+              <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-white/5 py-6 px-8 sm:px-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 shadow-inner">
+                    <Calculator className="w-6 h-6 text-indigo-400" />
                   </div>
-                  
-                  {/* Panel Title */}
-                  <div className="space-y-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-300 font-extrabold text-[9px] tracking-wider uppercase shadow-inner">
-                      <Activity className="w-3 h-3 text-indigo-400" />
-                      Hệ thống kiểm toán sức khỏe / Health Score
-                    </span>
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Financial Audit health</h4>
-                  </div>
-
-                  {/* Breathtaking double-ring Circular HUD Gauge */}
-                  <div className="relative my-8 flex items-center justify-center">
-                    {/* Ring Glow Pulse */}
-                    <div className={cn(
-                      "absolute inset-0 rounded-full blur-2xl opacity-10 transition-colors duration-1000",
-                      results.healthScore >= 80 ? "bg-emerald-500" :
-                      results.healthScore >= 50 ? "bg-amber-500" : "bg-rose-500"
-                    )} />
-                    
-                    <svg className="w-40 h-40 transform -rotate-90 filter drop-shadow-[0_0_8px_rgba(99,102,241,0.15)]">
-                      {/* Outer track line */}
-                      <circle
-                        cx="80"
-                        cy="80"
-                        r="60"
-                        className="stroke-slate-800/40"
-                        strokeWidth="5"
-                        fill="transparent"
-                      />
-                      {/* Inner precision dotted line track */}
-                      <circle
-                        cx="80"
-                        cy="80"
-                        r="52"
-                        className="stroke-slate-900/50"
-                        strokeWidth="1"
-                        strokeDasharray="4 4"
-                        fill="transparent"
-                      />
-                      {/* Active glowing indicator ring */}
-                      <motion.circle
-                        cx="80"
-                        cy="80"
-                        r="60"
-                        className={cn(
-                          "transition-all duration-1000",
-                          results.healthScore >= 80 ? "stroke-emerald-400" :
-                          results.healthScore >= 50 ? "stroke-amber-400" : "stroke-rose-400"
-                        )}
-                        strokeWidth="6"
-                        strokeLinecap="round"
-                        fill="transparent"
-                        strokeDasharray="377" // 2 * PI * r (r=60) = 376.99
-                        initial={{ strokeDashoffset: 377 }}
-                        animate={{ strokeDashoffset: 377 - (377 * results.healthScore) / 100 }}
-                        transition={{ duration: 1.8, ease: "circOut" }}
-                      />
-                    </svg>
-                    
-                    {/* Center HUD Core */}
-                    <div className="absolute flex flex-col items-center justify-center w-28 h-28 bg-[#090e24]/90 rounded-full border border-white/5 shadow-2xl hud-pulse">
-                      <span className="text-4xl font-extrabold tracking-tighter text-white leading-none font-mono">
-                        {results.healthScore}
-                      </span>
-                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">ĐIỂM / SCORE</span>
-                    </div>
-                  </div>
-
-                  {/* Status pills */}
-                  <div className="pt-2">
-                    <span className={cn(
-                      "font-extrabold text-[10px] uppercase tracking-wider py-2 px-6 rounded-full border shadow-lg backdrop-blur-md transition-all duration-500",
-                      results.healthScore >= 80 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" :
-                      results.healthScore >= 50 ? "bg-amber-500/10 text-amber-300 border-amber-500/20" :
-                      "bg-rose-500/10 text-rose-300 border-rose-500/20"
-                    )}>
-                      {results.healthScore >= 80 ? "VẬN HÀNH TỐI ƯU / OPTIMAL" :
-                       results.healthScore >= 50 ? "RỦI RO TRUNG BÌNH / WARNING" : "BÁO ĐỘNG RỦI RO / CRITICAL"}
-                    </span>
+                  <div className="flex flex-col">
+                    <span className="font-extrabold text-white text-base tracking-tight uppercase">Mẫu thông số chi phí mở rộng B2C</span>
+                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mt-0.5">Bilingual B2C Cost Parameters Matrix</span>
                   </div>
                 </div>
-
-                {/* 2. Customer Lifetime Value & Marketing Efficiency Bento (8 Cols) */}
-                <div className="lg:col-span-8 glass-panel rounded-[2.25rem] p-8 sm:p-10 shadow-2xl border border-white/5 relative overflow-hidden flex flex-col justify-between group">
-                  <div className="absolute -top-12 -right-12 p-6 opacity-[0.02] pointer-events-none select-none">
-                    <Award className="w-72 h-72 text-white" />
-                  </div>
-
-                  {/* Upper Row: Total Net LTV and Header */}
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-white/5">
-                    <div className="space-y-1">
-                      <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-300 font-extrabold text-[9px] tracking-wider uppercase shadow-inner">
-                        <DollarSign className="w-3 h-3 text-emerald-400" />
-                        Giá trị vòng đời trọn đời / Course Renewal LTV
-                      </span>
-                      <h3 className="text-xl font-extrabold text-white tracking-tight">Dự phóng học viên tái đăng ký khóa học</h3>
-                    </div>
-                    <div className="text-left md:text-right flex flex-col">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">DỰ BÁO CHỈ SỐ LTV / CLV FORECAST</span>
-                      <span className="text-3xl sm:text-4xl font-extrabold text-indigo-400 tracking-tighter pt-1 font-mono">
-                        {formatCurrency(results.customerLifetimeValue)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Lower Row: Metric Breakdown Grid + Glowing Dial */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6">
-                    {/* Net Student tuition */}
-                    <div className="bg-[#04060e]/60 rounded-2xl p-4 border border-white/5 shadow-inner">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">HỌC PHÍ THỰC THU / NET TUITION</span>
-                      <span className="text-lg font-bold text-slate-100 font-mono">{formatCurrency(results.netFeePerStudent)}</span>
-                      <span className="text-[8px] font-medium text-slate-400 block mt-1.5 leading-relaxed">
-                        Đã áp dụng giảm giá {formData.averageDiscountPercent || "0"}%
-                      </span>
-                    </div>
-                    {/* Renewal percentage */}
-                    <div className="bg-[#04060e]/60 rounded-2xl p-4 border border-white/5 shadow-inner">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">TỶ LỆ TÁI KÝ / RENEWAL RATE</span>
-                      <span className="text-lg font-bold text-emerald-400 font-mono">{formData.expectedRetentionRate || "0"}%</span>
-                      <span className="text-[8px] font-medium text-slate-400 block mt-1.5 leading-relaxed">
-                        Tái ký kỳ vọng ở học kỳ tiếp theo
-                      </span>
-                    </div>
-                    {/* CAC Efficiency Neon speedometer Slider Dial */}
-                    <div className="bg-[#04060e]/60 rounded-2xl p-4 border border-white/5 shadow-inner flex flex-col justify-between gap-4">
-                      <div className="space-y-0.5">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">HIỆU QUẢ MARKETING / LTV to CAC Ratio</span>
-                        <span className={cn(
-                          "text-lg font-bold tracking-tighter block font-mono",
-                          Number(formData.varRecruitmentPerStudent || 0) === 0 ? "text-slate-400" :
-                          results.ltvCacRatio >= 5 ? "text-indigo-400" :
-                          results.ltvCacRatio >= 3 ? "text-emerald-400" : "text-rose-400"
-                        )}>
-                          {Number(formData.varRecruitmentPerStudent || 0) > 0 ? `${results.ltvCacRatio.toFixed(2)}x` : "N/A"}
-                        </span>
-                      </div>
-                      
-                      {/* Interactive visual Dial Dial Speedometer */}
-                      <div className="space-y-1">
-                        <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden relative border border-white/5">
-                          {/* Colored multi-stop indicator track backplane */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-rose-500/80 via-amber-500/80 to-emerald-500/80" />
-                          {/* Translucent overlay */}
-                          <div className="absolute inset-0 bg-slate-950/20" />
-                          
-                          {Number(formData.varRecruitmentPerStudent || 0) > 0 ? (
-                            <motion.div 
-                              initial={{ left: 0 }}
-                              animate={{ left: `${Math.min(Math.max((results.ltvCacRatio / 8) * 100, 0), 96)}%` }}
-                              transition={{ duration: 1.8, ease: "circOut" }}
-                              className="absolute top-0 w-2.5 h-full bg-white rounded-full -translate-x-1 border border-black shadow-[0_0_8px_rgba(255,255,255,1)]"
-                            />
-                          ) : null}
-                        </div>
-                        <div className="flex justify-between text-[6px] font-black text-slate-500 uppercase tracking-widest pt-0.5">
-                          <span>Risk (&lt;3)</span>
-                          <span>Good (3-5)</span>
-                          <span>Max (&gt;5)</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
+                
+                {/* Quick Course Presets HUD */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden lg:inline-block">Chọn nhanh hồ sơ / Presets:</span>
+                  {Object.keys(COURSE_PRESETS).map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => applyPreset(key as keyof typeof COURSE_PRESETS)}
+                      className={cn(
+                        "text-[10px] font-black px-3.5 py-2 rounded-xl transition-all duration-300 border cursor-pointer",
+                        activePreset === key 
+                          ? "bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 scale-105" 
+                          : "bg-slate-950/60 text-slate-300 border-white/5 hover:border-indigo-500/30 hover:bg-slate-900/60"
+                      )}
+                    >
+                      {key === "ielts" ? "IELTS Mastery" : key === "kids" ? "Kids Starter" : "Communication"}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Results Bento Row 2: Advisory Strategic Ledger & Cost Distribution Bar */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* Form body */}
+              <form ref={formRef} onSubmit={handleSubmit} className="p-8 sm:p-10 space-y-12">
                 
-                {/* 1. Advisory Strategy Recommendations Panel (7 Cols) */}
-                <div className="lg:col-span-7 bg-[#0b0f24]/85 rounded-[2.25rem] p-6 sm:p-9 shadow-xl border border-white/5 space-y-6 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                    <Sparkles className="w-16 h-16 text-white" />
-                  </div>
-                  
-                  {/* Section Title */}
-                  <div className="flex items-center gap-3.5 pb-4 border-b border-white/5">
-                    <div className="p-2.5 bg-indigo-500/10 rounded-2xl text-indigo-400 shrink-0 border border-indigo-500/20 shadow-inner">
-                      <Sparkles className="w-5 h-5 animate-pulse" />
-                    </div>
+                {/* Form Section 1: Course Details */}
+                <div className="space-y-6 bg-white/[0.01] p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300 shadow-inner">
+                  <div className="flex items-center gap-3 text-slate-200 border-l-4 border-indigo-500 pl-4">
+                    <BookOpen className="w-5 h-5 text-indigo-400" />
                     <div>
-                      <h3 className="text-base font-extrabold uppercase tracking-wider text-white">Ý kiến kiểm toán & Đề xuất hành động</h3>
-                      <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">Strategic Audit & Financial Advisory Matrix</p>
+                      <h2 className="text-base font-extrabold uppercase tracking-wider leading-tight text-white">Chi tiết khóa học & Học phí</h2>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Course Details & Tuition Pricing</p>
                     </div>
                   </div>
-
-                  {/* Scrollable list */}
-                  <div className="space-y-4 max-h-[380px] overflow-y-auto pr-3 scrollbar-thin">
-                    {results.recommendations.map((rec, i) => (
-                      <div 
-                        key={i} 
-                        className={cn(
-                          "flex items-start gap-4 p-5 rounded-2xl border transition-all duration-300 hover:scale-[1.015]",
-                          rec.type === "warning" ? "bg-rose-950/20 border-rose-500/10 hover:bg-rose-950/30 hover:border-rose-500/25" :
-                          rec.type === "success" ? "bg-emerald-950/20 border-emerald-500/10 hover:bg-emerald-950/30 hover:border-emerald-500/25" :
-                          "bg-indigo-950/25 border-indigo-500/10 hover:bg-indigo-950/35 hover:border-indigo-500/25"
-                        )}
-                      >
-                        <div className={cn(
-                          "p-2.5 rounded-xl shrink-0 mt-0.5 shadow-lg",
-                          rec.type === "warning" ? "bg-rose-500 text-white" :
-                          rec.type === "success" ? "bg-emerald-500 text-white" :
-                          "bg-indigo-600 text-white"
-                        )}>
-                          {rec.type === "warning" ? <AlertTriangle className="w-4 h-4 animate-bounce" /> :
-                           rec.type === "success" ? <ShieldCheck className="w-4 h-4" /> :
-                           <Info className="w-4 h-4" />}
-                        </div>
-                        <div className="space-y-1.5 min-w-0">
-                          <span className={cn(
-                            "text-[8px] font-black uppercase tracking-widest block",
-                            rec.type === "warning" ? "text-rose-400" :
-                            rec.type === "success" ? "text-emerald-400" :
-                            "text-indigo-300"
-                          )}>
-                            {rec.type === "warning" ? "Hạn chế & Rủi ro tài chính / Critical Risk" :
-                             rec.type === "success" ? "Điểm mạnh tối ưu / Profit Strategy" :
-                             "Khuyến nghị đề xuất / Advisory Details"}
-                          </span>
-                          <p className="text-slate-200 text-sm font-semibold leading-relaxed">
-                            {rec.text}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                    <Field label="Tên khóa học" subLabel="Course Name" name="courseName" required placeholder="VD: IELTS Premium" defaultValue={formData.courseName} />
+                    <Field label="Học phí gốc danh nghĩa (VNĐ)" subLabel="Nominal Tuition (VND)" name="courseFeePerStudent" required type="number" placeholder="0" defaultValue={formData.courseFeePerStudent} />
+                    <Field label="Sĩ số học viên tuyển sinh" subLabel="Target Enrollment" name="totalStudents" required type="number" placeholder="0" defaultValue={formData.totalStudents} />
                   </div>
                 </div>
 
-                {/* 2. Interactive Segmented Cost Structure Chart (5 Cols) */}
-                <div className="lg:col-span-5 bg-[#0b0f24]/85 rounded-[2.25rem] p-6 sm:p-9 shadow-xl border border-white/5 flex flex-col justify-between space-y-6">
-                  
-                  {/* Title Section */}
-                  <div className="flex items-center gap-3.5 pb-4 border-b border-white/5">
-                    <div className="p-2.5 bg-emerald-500/10 rounded-2xl text-emerald-400 shrink-0 border border-emerald-500/20 shadow-inner">
-                      <BarChart3 className="w-5 h-5" />
-                    </div>
+                {/* Form Section 2: Staffing (Teacher & TA) */}
+                <div className="space-y-6 bg-white/[0.01] p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300 shadow-inner">
+                  <div className="flex items-center gap-3 text-slate-200 border-l-4 border-emerald-500 pl-4">
+                    <Users className="w-5 h-5 text-emerald-400" />
                     <div>
-                      <h3 className="text-base font-extrabold uppercase tracking-wider text-white">Cơ cấu phân bổ chi phí thực tế</h3>
-                      <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">Invested Capital Distribution Breakdown</p>
+                      <h2 className="text-base font-extrabold uppercase tracking-wider leading-tight text-white">Đội ngũ giảng dạy</h2>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Academic Staffing (Teachers & TAs)</p>
                     </div>
                   </div>
-
-                  {/* Graphical Stacked Segmented Bar */}
-                  <div className="space-y-8 flex-grow flex flex-col justify-center py-4">
-                    <div className="w-full h-8 bg-slate-950/70 rounded-2xl p-1 border border-white/5 overflow-hidden flex shadow-inner relative">
-                      {/* Teaching Cost Segment */}
-                      {results.teachingCostRatio > 0 && (
-                        <motion.div 
-                          title="Chi phí giảng dạy"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${results.teachingCostRatio}%` }}
-                          transition={{ duration: 1.2, ease: "easeOut" }}
-                          className="bg-indigo-600 h-full text-white text-[10px] font-black flex items-center justify-center cursor-default rounded-l-xl hover:opacity-90 transition-opacity border-r border-slate-950 shadow-lg relative overflow-hidden"
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
-                          {results.teachingCostRatio > 18 && `${results.teachingCostRatio.toFixed(0)}%`}
-                        </motion.div>
-                      )}
-                      
-                      {/* Marketing CAC Segment */}
-                      {results.acquisitionCostRatio > 0 && (
-                        <motion.div 
-                          title="Chi phí Marketing"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${results.acquisitionCostRatio}%` }}
-                          transition={{ duration: 1.2, ease: "easeOut" }}
-                          className="bg-emerald-500 h-full text-white text-[10px] font-black flex items-center justify-center cursor-default hover:opacity-90 transition-opacity border-r border-slate-950 shadow-lg relative overflow-hidden"
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
-                          {results.acquisitionCostRatio > 18 && `${results.acquisitionCostRatio.toFixed(0)}%`}
-                        </motion.div>
-                      )}
-                      
-                      {/* Facility Utilities & Depreciation Segment */}
-                      {100 - results.teachingCostRatio - results.acquisitionCostRatio > 0 && (
-                        <motion.div 
-                          title="Vận hành & Phòng học"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${100 - results.teachingCostRatio - results.acquisitionCostRatio}%` }}
-                          transition={{ duration: 1.2, ease: "easeOut" }}
-                          className="bg-slate-500 h-full text-white text-[10px] font-black flex items-center justify-center cursor-default rounded-r-xl hover:opacity-90 transition-opacity shadow-lg relative overflow-hidden"
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
-                          {100 - results.teachingCostRatio - results.acquisitionCostRatio > 18 && 
-                            `${(100 - results.teachingCostRatio - results.acquisitionCostRatio).toFixed(0)}%`}
-                        </motion.div>
-                      )}
-                    </div>
-
-                    {/* Detailed Stats Legend with custom accents */}
-                    <div className="grid grid-cols-1 gap-4 pt-2">
-                      <div className="flex items-center justify-between text-sm py-1 border-b border-white/[0.03] px-1">
-                        <div className="flex items-center gap-3">
-                          <span className="w-3 h-3 bg-indigo-600 rounded-md shadow-lg shadow-indigo-600/40 shrink-0" />
-                          <span className="text-slate-350 font-bold text-xs">Học thuật / Teaching Cost (GV + TA)</span>
-                        </div>
-                        <span className="font-extrabold text-slate-100 font-mono">{results.teachingCostRatio.toFixed(1)}%</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-sm py-1 border-b border-white/[0.03] px-1">
-                        <div className="flex items-center gap-3">
-                          <span className="w-3 h-3 bg-emerald-500 rounded-md shadow-lg shadow-emerald-500/40 shrink-0" />
-                          <span className="text-slate-350 font-bold text-xs">Chiêu sinh / Marketing & CAC Expenses</span>
-                        </div>
-                        <span className="font-extrabold text-slate-100 font-mono">{results.acquisitionCostRatio.toFixed(1)}%</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-sm py-1 px-1">
-                        <div className="flex items-center gap-3">
-                          <span className="w-3 h-3 bg-slate-500 rounded-md shadow-lg shrink-0" />
-                          <span className="text-slate-350 font-bold text-xs">Vận hành phòng / Utilities & Classroom Overhead</span>
-                        </div>
-                        <span className="font-extrabold text-slate-100 font-mono">
-                          {(100 - results.teachingCostRatio - results.acquisitionCostRatio).toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 pt-2">
+                    <Field label="Số buổi học" subLabel="Sessions" name="totalSessions" required type="number" placeholder="0" defaultValue={formData.totalSessions} />
+                    <Field label="Giờ / buổi" subLabel="Hours/Session" name="hoursPerSession" required type="number" step="0.5" placeholder="0.0" defaultValue={formData.hoursPerSession} />
+                    <Field label="Lương GV chính / giờ (VNĐ)" subLabel="Main Teacher Wage" name="teacherSalaryPerHour" required type="number" placeholder="0" defaultValue={formData.teacherSalaryPerHour} />
+                    <Field label="Số trợ giảng/lớp" subLabel="TAs per Class" name="assistantsPerSession" type="number" placeholder="0" defaultValue={formData.assistantsPerSession} />
+                    <Field label="Lương trợ giảng/giờ (VNĐ)" subLabel="TA Wage (Hourly)" name="assistantSalaryPerHour" type="number" placeholder="0" defaultValue={formData.assistantSalaryPerHour} />
                   </div>
                 </div>
 
-              </div>
-
-              {/* Results Bento Row 3: Corporate Cash Ledger & Advanced KPIs */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                
-                {/* 1. Cash Balance Sheet Ledger (Bilingual) */}
-                <div className="glass-panel rounded-[2.25rem] shadow-2xl border border-white/5 overflow-hidden">
-                  <div className="py-6 px-8 border-b border-white/5 bg-slate-950/40 flex items-center justify-between">
-                    <div className="flex items-center gap-3.5">
-                      <BarChart3 className="w-5 h-5 text-indigo-400 animate-pulse" />
-                      <div className="flex flex-col">
-                        <h3 className="text-base font-extrabold uppercase tracking-tight text-white">Cân đối dòng tiền & Chi phí ròng</h3>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Financial Cash Flow Ledger</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-8 sm:p-10 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10">
-                     <StatItem label="Chi phí trợ giảng" subLabel="Assistant Cost (TA)" value={formatCurrency(results.assistantCost)} />
-                     <StatItem label="Hao mòn tiện ích phòng" subLabel="Classroom Wear & Utilities" value={formatCurrency(results.classroomOverhead)} />
-                     <StatItem label="Định phí cố định tổng" subLabel="Total Fixed Cost" value={formatCurrency(results.totalFixedCost)} />
-                     <StatItem label="Biến phí biến đổi tổng" subLabel="Total Variable Cost" value={formatCurrency(results.totalVariableCost)} />
-                     <StatItem label="Tổng chi phí tích lũy" subLabel="Total Invested Cost" value={formatCurrency(results.totalCost)} highlighted />
-                     <StatItem label="Doanh thu thực thu ròng" subLabel="Net Tuition Revenue" value={formatCurrency(results.totalRevenue)} highlighted />
-                  </div>
-                </div>
-
-                {/* 2. Corporate KPIs & Ratios Indicators */}
-                <div className="glass-panel rounded-[2.25rem] shadow-2xl border border-white/5 overflow-hidden">
-                  <div className="py-6 px-8 border-b border-white/5 bg-slate-950/40 flex items-center justify-between">
-                    <div className="flex items-center gap-3.5">
-                      <Percent className="w-5 h-5 text-emerald-400" />
-                      <div className="flex flex-col">
-                        <h3 className="text-base font-extrabold uppercase tracking-tight text-white">Chỉ số đo lường hiệu suất (KPIs)</h3>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Financial Indicators & Ratios</p>
-                      </div>
-                    </div>
-                  </div>
+                {/* Form Section 3 & 4 Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   
-                  {/* Detailed Indicator rows */}
-                  <div className="p-6 sm:p-8 space-y-2">
-                    <MetricRow label="Ngưỡng học viên hòa vốn" subLabel="Break-even Enrollment" value={results.breakEvenStudents.toFixed(1)} suffix="Học viên" suffixEn="Students" />
-                    <MetricRow label="Doanh thu hòa vốn thực tế" subLabel="Break-even Revenue Threshold" value={formatCurrency(results.breakEvenRevenue)} />
-                    
-                    {/* Margin of Safety Row with pulsing color status */}
-                    <div className="flex items-center justify-between py-3 border-b border-white/[0.03] px-2 -mx-2 hover:bg-white/[0.02] transition-colors rounded-lg">
-                      <div className="flex flex-col min-w-0 flex-1">
-                        <span className="text-slate-300 text-xs font-bold tracking-tight leading-tight">Biên an toàn tài chính</span>
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5">Financial Safety Margin</span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className={cn(
-                          "text-2xl font-black tracking-tighter font-mono",
-                          results.safetyMarginPercent >= 20 ? "text-emerald-400" :
-                          results.safetyMarginPercent >= 0 ? "text-amber-400" : "text-rose-400"
-                        )}>
-                          {results.safetyMarginPercent.toFixed(1)}%
-                        </span>
+                  {/* Left Form: Overhead */}
+                  <div className="space-y-6 bg-white/[0.01] p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300">
+                    <div className="flex items-center gap-3 text-slate-200 border-l-4 border-violet-500 pl-4">
+                      <LayoutDashboard className="w-5 h-5 text-violet-400" />
+                      <div>
+                        <h2 className="text-base font-extrabold uppercase tracking-wider text-white leading-tight">Định phí cố định & Vận hành phòng</h2>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Fixed Overhead & Classroom Utilities</p>
                       </div>
                     </div>
-
-                    <MetricRow label="Tỷ suất lợi nhuận đóng góp (CMR)" subLabel="Contribution Margin Ratio (CMR)" value={`${results.contributionMarginRatio.toFixed(1)}%`} />
-                    <MetricRow label="Độ lớn đòn bẩy vận hành" subLabel="Degree of Operating Leverage (DOL)" value={results.operatingLeverage.toFixed(2)} />
-                    <MetricRow label="Tổng chi phí phân bổ / Học viên" subLabel="Invested Cost per Student" value={formatCurrency(results.costPerStudent)} />
-                    <MetricRow label="Lợi nhuận đóng góp / Học viên" subLabel="Contribution Margin per Student" value={formatCurrency(results.marginPerStudent)} />
-                    <MetricRow label="Doanh thu / Giờ GV đứng lớp" subLabel="Revenue per Class-Hour (RevPCH)" value={formatCurrency(results.revenuePerInstructorHour)} />
+                    <div className="grid grid-cols-1 gap-5 pt-2">
+                      <Field compact label="Mặt bằng / Phòng học thuê" subLabel="Facility Rental" name="fixedVenueCost" type="number" defaultValue={formData.fixedVenueCost} />
+                      <Field compact label="Thiết kế & in ấn học liệu cố định" subLabel="Fixed Materials" name="fixedMaterialsCost" type="number" defaultValue={formData.fixedMaterialsCost} />
+                      <Field compact label="Phí nền tảng & công nghệ cố định" subLabel="Fixed Tech Software" name="fixedTechnologyCost" type="number" defaultValue={formData.fixedTechnologyCost} />
+                      <Field compact label="Hành chính & Quản lý cơ sở" subLabel="Admin Staff Overhead" name="fixedAdminCost" type="number" defaultValue={formData.fixedAdminCost} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <Field compact label="Điện nước mạng / giờ dạy" subLabel="Utilities / Hour" name="utilitiesPerHour" type="number" defaultValue={formData.utilitiesPerHour} />
+                        <Field compact label="Khấu hao thiết bị / buổi học" subLabel="Depreciation / Session" name="depreciationPerSession" type="number" defaultValue={formData.depreciationPerSession} />
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Right Form: Variable costs & CAC */}
+                  <div className="space-y-6 bg-indigo-950/10 p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300">
+                    <div className="flex items-center gap-3 text-slate-200 border-l-4 border-indigo-400 pl-4">
+                      <CreditCard className="w-5 h-5 text-indigo-400" />
+                      <div>
+                        <h2 className="text-base font-extrabold uppercase tracking-wider text-white leading-tight">Biến phí học viên & Ưu đãi chiết khấu</h2>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Variable Costs & Promotional Discounts</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-5 pt-2">
+                      <Field compact label="Chi phí Marketing trên mỗi học viên" subLabel="Marketing per Student (CAC)" name="varRecruitmentPerStudent" type="number" defaultValue={formData.varRecruitmentPerStudent} />
+                      <Field compact label="Đầu tư cho Quản lý / Định phí Marketing" subLabel="Fixed Marketing Budget" name="fixedMarketingCost" type="number" defaultValue={formData.fixedMarketingCost} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <Field compact label="Giáo trình & Quà tặng / học viên" subLabel="Student Books & Gifts" name="varMaterialsPerStudent" type="number" defaultValue={formData.varMaterialsPerStudent} />
+                        <Field compact label="LMS / học viên" subLabel="LMS / Student" name="varTechnologyPerStudent" type="number" defaultValue={formData.varTechnologyPerStudent} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Field compact label="Biến phí khác / học viên" subLabel="Other Variable / Student" name="varOtherPerStudent" type="number" defaultValue={formData.varOtherPerStudent} />
+                        <div className="hidden"></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                        <Field compact label="Chiết khấu giảm giá bình quan %" subLabel="Avg Promo Discount %" name="averageDiscountPercent" type="number" placeholder="0" defaultValue={formData.averageDiscountPercent} />
+                        <Field compact label="Tỷ lệ học viên tái đăng ký %" subLabel="Expected Retention %" name="expectedRetentionRate" type="number" placeholder="0" defaultValue={formData.expectedRetentionRate} />
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
 
-              </div>
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="bg-rose-950/30 border border-rose-500/20 text-rose-200 px-6 py-4 rounded-2xl flex items-center gap-3.5 shadow-lg"
+                  >
+                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
+                    <span className="font-semibold text-sm leading-relaxed">{error}</span>
+                  </motion.div>
+                )}
 
-              {/* Action buttons footer */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
-                 <button
-                   onClick={downloadCSV}
-                   className="w-full sm:w-auto group flex items-center justify-center gap-3.5 py-5 px-10 bg-white text-slate-950 border border-slate-200 rounded-2xl shadow-[0_15px_30px_rgba(255,255,255,0.05)] text-base font-black hover:bg-slate-100 transition-all duration-300 transform active:scale-95 cursor-pointer"
-                 >
-                   <Download className="w-5 h-5 text-indigo-600 transition-colors" />
-                   <span>Xuất báo cáo kiểm toán song ngữ (CSV)</span>
-                 </button>
-                 <button
-                   onClick={() => { 
-                     setResults(null); 
-                     formRef.current?.reset();
-                     setFormData({});
-                     setActivePreset("");
-                     window.scrollTo({ top: 0, behavior: 'smooth' }); 
-                   }}
-                   className="w-full sm:w-auto flex items-center justify-center gap-3.5 py-5 px-10 bg-slate-950/60 border border-white/10 rounded-2xl shadow-lg text-base font-extrabold text-slate-350 hover:bg-slate-900/60 hover:text-white transition-all duration-300 transform active:scale-95 cursor-pointer"
-                 >
-                   <RefreshCcw className="w-4 h-4 transition-transform hover:rotate-180 duration-500 text-slate-400" />
-                   <span>Lập hồ sơ kiểm toán mới</span>
-                 </button>
-              </div>
-
+                {/* Footer Form Button Row */}
+                <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+                  <p className="text-xs text-slate-400 max-w-sm flex items-start gap-2.5 italic">
+                    <Info className="w-4 h-4 shrink-0 mt-0.5 text-indigo-400 animate-pulse" />
+                    <span>Kiểm toán B2C giúp làm rõ cơ cấu định phí trợ giảng, utilities phòng học, chiết khấu và giá trị trọn đời học viên.</span>
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full sm:w-auto group relative inline-flex items-center justify-center gap-3 py-4 px-10 border border-indigo-400/20 rounded-2xl shadow-xl text-lg font-black text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all duration-300 transform active:scale-95 disabled:opacity-50 cursor-pointer"
+                  >
+                    {loading ? (
+                      <RefreshCcw className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <span>Tính toán B2C & Kiểm toán</span>
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </motion.div>
-          )}
-        </AnimatePresence>
+
+            {/* B2C Bento Results Dashboard */}
+            <AnimatePresence>
+              {results && (
+                <motion.div 
+                  ref={resultsRef}
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  className="space-y-12 pb-24"
+                >
+                  
+                  {/* Results Bento Row 1: Circular Health Score HUD & LTV renewal metrics */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    {/* 1. Health Score Circular Dashboard HUD (4 Cols) */}
+                    <div className="lg:col-span-4 glass-panel rounded-[2.25rem] p-8 flex flex-col items-center justify-between text-center relative overflow-hidden border border-white/5 group">
+                      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        <Activity className="w-28 h-28 text-white" />
+                      </div>
+                      
+                      {/* Panel Title */}
+                      <div className="space-y-2">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-300 font-extrabold text-[9px] tracking-wider uppercase shadow-inner">
+                          <Activity className="w-3 h-3 text-indigo-400" />
+                          Hệ thống kiểm toán sức khỏe / Health Score
+                        </span>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Financial Audit health</h4>
+                      </div>
+
+                      {/* Circular Gauge */}
+                      <div className="relative my-8 flex items-center justify-center">
+                        <div className={cn(
+                          "absolute inset-0 rounded-full blur-2xl opacity-10 transition-colors duration-1000",
+                          results.healthScore >= 80 ? "bg-emerald-500" :
+                          results.healthScore >= 50 ? "bg-amber-500" : "bg-rose-500"
+                        )} />
+                        
+                        <svg className="w-40 h-40 transform -rotate-90 filter drop-shadow-[0_0_8px_rgba(99,102,241,0.15)]">
+                          <circle cx="80" cy="80" r="60" className="stroke-slate-800/40" strokeWidth="5" fill="transparent" />
+                          <circle cx="80" cy="80" r="52" className="stroke-slate-900/50" strokeWidth="1" strokeDasharray="4 4" fill="transparent" />
+                          <motion.circle
+                            cx="80"
+                            cy="80"
+                            r="60"
+                            className={cn(
+                              "transition-all duration-1000",
+                              results.healthScore >= 80 ? "stroke-emerald-400" :
+                              results.healthScore >= 50 ? "stroke-amber-400" : "stroke-rose-400"
+                            )}
+                            strokeWidth="6"
+                            strokeLinecap="round"
+                            fill="transparent"
+                            strokeDasharray="377"
+                            initial={{ strokeDashoffset: 377 }}
+                            animate={{ strokeDashoffset: 377 - (377 * results.healthScore) / 100 }}
+                            transition={{ duration: 1.8, ease: "circOut" }}
+                          />
+                        </svg>
+                        
+                        <div className="absolute flex flex-col items-center justify-center w-28 h-28 bg-[#090e24]/90 rounded-full border border-white/5 shadow-2xl">
+                          <span className="text-4xl font-extrabold tracking-tighter text-white leading-none font-mono">
+                            {results.healthScore}
+                          </span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">ĐIỂM / SCORE</span>
+                        </div>
+                      </div>
+
+                      {/* Status pills */}
+                      <div className="pt-2">
+                        <span className={cn(
+                          "font-extrabold text-[10px] uppercase tracking-wider py-2 px-6 rounded-full border shadow-lg backdrop-blur-md transition-all duration-500",
+                          results.healthScore >= 80 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" :
+                          results.healthScore >= 50 ? "bg-amber-500/10 text-amber-300 border-amber-500/20" :
+                          "bg-rose-500/10 text-rose-300 border-rose-500/20"
+                        )}>
+                          {results.healthScore >= 80 ? "VẬN HÀNH TỐI ƯU / OPTIMAL" :
+                           results.healthScore >= 50 ? "RỦI RO TRUNG BÌNH / WARNING" : "BÁO ĐỘNG RỦI RO / CRITICAL"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 2. Customer Lifetime Value & Marketing Efficiency Bento (8 Cols) */}
+                    <div className="lg:col-span-8 glass-panel rounded-[2.25rem] p-8 sm:p-10 shadow-2xl border border-white/5 relative overflow-hidden flex flex-col justify-between group">
+                      <div className="absolute -top-12 -right-12 p-6 opacity-[0.02] pointer-events-none select-none">
+                        <Award className="w-72 h-72 text-white" />
+                      </div>
+
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-white/5">
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-300 font-extrabold text-[9px] tracking-wider uppercase shadow-inner">
+                            <DollarSign className="w-3 h-3 text-emerald-400" />
+                            Giá trị vòng đời trọn đời / Course Renewal LTV
+                          </span>
+                          <h3 className="text-xl font-extrabold text-white tracking-tight">Dự phóng học viên tái đăng ký khóa học</h3>
+                        </div>
+                        <div className="text-left md:text-right flex flex-col">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">DỰ BÁO CHỈ SỐ LTV / CLV FORECAST</span>
+                          <span className="text-3xl sm:text-4xl font-extrabold text-indigo-400 tracking-tighter pt-1 font-mono">
+                            {formatCurrency(results.customerLifetimeValue)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6">
+                        <div className="bg-[#04060e]/60 rounded-2xl p-4 border border-white/5 shadow-inner">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">HỌC PHÍ THỰC THU / NET TUITION</span>
+                          <span className="text-lg font-bold text-slate-100 font-mono">{formatCurrency(results.netFeePerStudent)}</span>
+                          <span className="text-[8px] font-medium text-slate-400 block mt-1.5 leading-relaxed">
+                            Đã áp dụng giảm giá {formData.averageDiscountPercent || "0"}%
+                          </span>
+                        </div>
+                        <div className="bg-[#04060e]/60 rounded-2xl p-4 border border-white/5 shadow-inner">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">TỶ LỆ TÁI KÝ / RENEWAL RATE</span>
+                          <span className="text-lg font-bold text-emerald-400 font-mono">{formData.expectedRetentionRate || "0"}%</span>
+                          <span className="text-[8px] font-medium text-slate-400 block mt-1.5 leading-relaxed">
+                            Tái ký kỳ vọng ở học kỳ tiếp theo
+                          </span>
+                        </div>
+                        <div className="bg-[#04060e]/60 rounded-2xl p-4 border border-white/5 shadow-inner flex flex-col justify-between gap-4">
+                          <div className="space-y-0.5">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">HIỆU QUẢ MARKETING / LTV to CAC Ratio</span>
+                            <span className={cn(
+                              "text-lg font-bold tracking-tighter block font-mono",
+                              Number(formData.varRecruitmentPerStudent || 0) === 0 ? "text-slate-400" :
+                              results.ltvCacRatio >= 5 ? "text-indigo-400" :
+                              results.ltvCacRatio >= 3 ? "text-emerald-400" : "text-rose-400"
+                            )}>
+                              {Number(formData.varRecruitmentPerStudent || 0) > 0 ? `${results.ltvCacRatio.toFixed(2)}x` : "N/A"}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden relative border border-white/5">
+                              <div className="absolute inset-0 bg-gradient-to-r from-rose-500/80 via-amber-500/80 to-emerald-500/80" />
+                              <div className="absolute inset-0 bg-slate-950/20" />
+                              {Number(formData.varRecruitmentPerStudent || 0) > 0 ? (
+                                <motion.div 
+                                  initial={{ left: 0 }}
+                                  animate={{ left: `${Math.min(Math.max((results.ltvCacRatio / 8) * 100, 0), 96)}%` }}
+                                  transition={{ duration: 1.8, ease: "circOut" }}
+                                  className="absolute top-0 w-2.5 h-full bg-white rounded-full -translate-x-1 border border-black shadow-[0_0_8px_rgba(255,255,255,1)]"
+                                />
+                              ) : null}
+                            </div>
+                            <div className="flex justify-between text-[6px] font-black text-slate-500 uppercase tracking-widest pt-0.5">
+                              <span>Risk (&lt;3)</span>
+                              <span>Good (3-5)</span>
+                              <span>Max (&gt;5)</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Results Bento Row 2: Advisory Strategic Ledger & Cost Distribution Bar */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    {/* 1. Advisory Strategy Recommendations Panel (7 Cols) */}
+                    <div className="lg:col-span-7 bg-[#0b0f24]/85 rounded-[2.25rem] p-6 sm:p-9 shadow-xl border border-white/5 space-y-6 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        <Sparkles className="w-16 h-16 text-white" />
+                      </div>
+                      
+                      <div className="flex items-center gap-3.5 pb-4 border-b border-white/5">
+                        <div className="p-2.5 bg-indigo-500/10 rounded-2xl text-indigo-400 shrink-0 border border-indigo-500/20 shadow-inner">
+                          <Sparkles className="w-5 h-5 animate-pulse" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-extrabold uppercase tracking-wider text-white">Ý kiến kiểm toán & Đề xuất hành động</h3>
+                          <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">Strategic Audit & Financial Advisory Matrix</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 max-h-[380px] overflow-y-auto pr-3 scrollbar-thin">
+                        {results.recommendations.map((rec, i) => (
+                          <div 
+                            key={i} 
+                            className={cn(
+                              "flex items-start gap-4 p-5 rounded-2xl border transition-all duration-300 hover:scale-[1.015]",
+                              rec.type === "warning" ? "bg-rose-950/20 border-rose-500/10 hover:bg-rose-950/30 hover:border-rose-500/25" :
+                              rec.type === "success" ? "bg-emerald-950/20 border-emerald-500/10 hover:bg-emerald-950/30 hover:border-emerald-500/25" :
+                              "bg-indigo-950/25 border-indigo-500/10 hover:bg-indigo-950/35 hover:border-indigo-500/25"
+                            )}
+                          >
+                            <div className={cn(
+                              "p-2.5 rounded-xl shrink-0 mt-0.5 shadow-lg",
+                              rec.type === "warning" ? "bg-rose-500 text-white" :
+                              rec.type === "success" ? "bg-emerald-500 text-white" :
+                              "bg-indigo-600 text-white"
+                            )}>
+                              {rec.type === "warning" ? <AlertTriangle className="w-4 h-4" /> :
+                               rec.type === "success" ? <ShieldCheck className="w-4 h-4" /> :
+                               <Info className="w-4 h-4" />}
+                            </div>
+                            <div className="space-y-1.5 min-w-0">
+                              <span className={cn(
+                                "text-[8px] font-black uppercase tracking-widest block",
+                                rec.type === "warning" ? "text-rose-400" :
+                                rec.type === "success" ? "text-emerald-400" :
+                                "text-indigo-300"
+                              )}>
+                                {rec.type === "warning" ? "Hạn chế & Rủi ro tài chính / Critical Risk" :
+                                 rec.type === "success" ? "Điểm mạnh tối ưu / Profit Strategy" :
+                                 "Khuyến nghị đề xuất / Advisory Details"}
+                              </span>
+                              <p className="text-slate-200 text-sm font-semibold leading-relaxed">
+                                {rec.text}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 2. Interactive Segmented Cost Structure Chart (5 Cols) */}
+                    <div className="lg:col-span-5 bg-[#0b0f24]/85 rounded-[2.25rem] p-6 sm:p-9 shadow-xl border border-white/5 flex flex-col justify-between space-y-6">
+                      
+                      <div className="flex items-center gap-3.5 pb-4 border-b border-white/5">
+                        <div className="p-2.5 bg-emerald-500/10 rounded-2xl text-emerald-400 shrink-0 border border-emerald-500/20 shadow-inner">
+                          <BarChart3 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-extrabold uppercase tracking-wider text-white">Cơ cấu phân bổ chi phí thực tế</h3>
+                          <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">Invested Capital Distribution Breakdown</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-8 flex-grow flex flex-col justify-center py-4">
+                        <div className="w-full h-8 bg-slate-950/70 rounded-2xl p-1 border border-white/5 overflow-hidden flex shadow-inner relative">
+                          {results.teachingCostRatio > 0 && (
+                            <motion.div 
+                              title="Chi phí giảng dạy"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${results.teachingCostRatio}%` }}
+                              transition={{ duration: 1.2, ease: "easeOut" }}
+                              className="bg-indigo-600 h-full text-white text-[10px] font-black flex items-center justify-center cursor-default rounded-l-xl hover:opacity-90 transition-opacity border-r border-slate-950 shadow-lg relative overflow-hidden"
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
+                              {results.teachingCostRatio > 18 && `${results.teachingCostRatio.toFixed(0)}%`}
+                            </motion.div>
+                          )}
+                          {results.acquisitionCostRatio > 0 && (
+                            <motion.div 
+                              title="Marketing"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${results.acquisitionCostRatio}%` }}
+                              transition={{ duration: 1.2, ease: "easeOut" }}
+                              className="bg-emerald-500 h-full text-white text-[10px] font-black flex items-center justify-center cursor-default hover:opacity-90 transition-opacity border-r border-slate-950 shadow-lg relative overflow-hidden"
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
+                              {results.acquisitionCostRatio > 18 && `${results.acquisitionCostRatio.toFixed(0)}%`}
+                            </motion.div>
+                          )}
+                          {100 - results.teachingCostRatio - results.acquisitionCostRatio > 0 && (
+                            <motion.div 
+                              title="Hao mòn & Utilities"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${100 - results.teachingCostRatio - results.acquisitionCostRatio}%` }}
+                              transition={{ duration: 1.2, ease: "easeOut" }}
+                              className="bg-slate-500 h-full text-white text-[10px] font-black flex items-center justify-center cursor-default rounded-r-xl hover:opacity-90 transition-opacity shadow-lg relative overflow-hidden"
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
+                              {100 - results.teachingCostRatio - results.acquisitionCostRatio > 18 && 
+                                `${(100 - results.teachingCostRatio - results.acquisitionCostRatio).toFixed(0)}%`}
+                            </motion.div>
+                          )}
+                        </div>
+
+                        {/* Detailed Stats Legend */}
+                        <div className="grid grid-cols-1 gap-4 pt-2">
+                          <div className="flex items-center justify-between text-sm py-1 border-b border-white/[0.03] px-1">
+                            <div className="flex items-center gap-3">
+                              <span className="w-3 h-3 bg-indigo-600 rounded-md shadow-lg shrink-0" />
+                              <span className="text-slate-300 font-bold text-xs">Học thuật / Teaching Cost (GV + TA)</span>
+                            </div>
+                            <span className="font-extrabold text-slate-100 font-mono">{results.teachingCostRatio.toFixed(1)}%</span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-sm py-1 border-b border-white/[0.03] px-1">
+                            <div className="flex items-center gap-3">
+                              <span className="w-3 h-3 bg-emerald-500 rounded-md shadow-lg shrink-0" />
+                              <span className="text-slate-300 font-bold text-xs">Chiêu sinh / Marketing & CAC Expenses</span>
+                            </div>
+                            <span className="font-extrabold text-slate-100 font-mono">{results.acquisitionCostRatio.toFixed(1)}%</span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-sm py-1 px-1">
+                            <div className="flex items-center gap-3">
+                              <span className="w-3 h-3 bg-slate-500 rounded-md shadow-lg shrink-0" />
+                              <span className="text-slate-300 font-bold text-xs">Vận hành phòng / Utilities & Classroom Overhead</span>
+                            </div>
+                            <span className="font-extrabold text-slate-100 font-mono">
+                              {(100 - results.teachingCostRatio - results.acquisitionCostRatio).toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Results Bento Row 3: Corporate Cash Ledger & Advanced KPIs */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    
+                    {/* 1. Cash Balance Sheet Ledger */}
+                    <div className="glass-panel rounded-[2.25rem] shadow-2xl border border-white/5 overflow-hidden">
+                      <div className="py-6 px-8 border-b border-white/5 bg-slate-950/40 flex items-center justify-between">
+                        <div className="flex items-center gap-3.5">
+                          <BarChart3 className="w-5 h-5 text-indigo-400" />
+                          <div className="flex flex-col">
+                            <h3 className="text-base font-extrabold uppercase tracking-tight text-white">Cân đối dòng tiền & Chi phí ròng</h3>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Financial Cash Flow Ledger</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-8 sm:p-10 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10 bg-[#070b1e]/30">
+                         <StatItem label="Chi phí trợ giảng" subLabel="Assistant Cost (TA)" value={formatCurrency(results.assistantCost)} />
+                         <StatItem label="Hao mòn tiện ích phòng" subLabel="Classroom Wear & Utilities" value={formatCurrency(results.classroomOverhead)} />
+                         <StatItem label="Định phí cố định tổng" subLabel="Total Fixed Cost" value={formatCurrency(results.totalFixedCost)} />
+                         <StatItem label="Biến phí biến đổi tổng" subLabel="Total Variable Cost" value={formatCurrency(results.totalVariableCost)} />
+                         <StatItem label="Tổng chi phí tích lũy" subLabel="Total Invested Cost" value={formatCurrency(results.totalCost)} highlighted />
+                         <StatItem label="Doanh thu thực thu ròng" subLabel="Net Tuition Revenue" value={formatCurrency(results.totalRevenue)} highlighted />
+                      </div>
+                    </div>
+
+                    {/* 2. Corporate KPIs & Ratios Indicators */}
+                    <div className="glass-panel rounded-[2.25rem] shadow-2xl border border-white/5 overflow-hidden">
+                      <div className="py-6 px-8 border-b border-white/5 bg-slate-950/40 flex items-center justify-between">
+                        <div className="flex items-center gap-3.5">
+                          <Percent className="w-5 h-5 text-emerald-400" />
+                          <div className="flex flex-col">
+                            <h3 className="text-base font-extrabold uppercase tracking-tight text-white">Chỉ số đo lường hiệu suất (KPIs)</h3>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Financial Indicators & Ratios</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-6 sm:p-8 space-y-2 bg-[#070b1e]/30">
+                        <MetricRow label="Ngưỡng học viên hòa vốn" subLabel="Break-even Enrollment" value={results.breakEvenStudents.toFixed(1)} suffix="Học viên" suffixEn="Students" />
+                        <MetricRow label="Doanh thu hòa vốn thực tế" subLabel="Break-even Revenue Threshold" value={formatCurrency(results.breakEvenRevenue)} />
+                        
+                        <div className="flex items-center justify-between py-3 border-b border-white/[0.03] px-2 -mx-2 hover:bg-white/[0.02] transition-colors rounded-lg">
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <span className="text-slate-300 text-xs font-bold tracking-tight leading-tight">Biên an toàn tài chính</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5">Financial Safety Margin</span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={cn(
+                              "text-2xl font-black tracking-tighter font-mono",
+                              results.safetyMarginPercent >= 20 ? "text-emerald-400" :
+                              results.safetyMarginPercent >= 0 ? "text-amber-400" : "text-rose-400"
+                            )}>
+                              {results.safetyMarginPercent.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <MetricRow label="Tỷ suất lợi nhuận đóng góp (CMR)" subLabel="Contribution Margin Ratio (CMR)" value={`${results.contributionMarginRatio.toFixed(1)}%`} />
+                        <MetricRow label="Độ lớn đòn bẩy vận hành" subLabel="Degree of Operating Leverage (DOL)" value={results.operatingLeverage.toFixed(2)} />
+                        <MetricRow label="Tổng chi phí phân bổ / Học viên" subLabel="Invested Cost per Student" value={formatCurrency(results.costPerStudent)} />
+                        <MetricRow label="Lợi nhuận đóng góp / Học viên" subLabel="Contribution Margin per Student" value={formatCurrency(results.marginPerStudent)} />
+                        <MetricRow label="Doanh thu / Giờ GV đứng lớp" subLabel="Revenue per Class-Hour (RevPCH)" value={formatCurrency(results.revenuePerInstructorHour)} />
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Action buttons footer */}
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
+                     <button
+                       onClick={downloadCSV}
+                       className="w-full sm:w-auto group flex items-center justify-center gap-3.5 py-5 px-10 bg-white text-slate-950 border border-slate-200 rounded-2xl shadow-xl text-base font-black hover:bg-slate-100 transition-all duration-300 transform active:scale-95 cursor-pointer"
+                     >
+                       <Download className="w-5 h-5 text-indigo-600" />
+                       <span>Xuất báo cáo kiểm toán song ngữ (CSV)</span>
+                     </button>
+                     <button
+                       onClick={() => { 
+                         setResults(null); 
+                         formRef.current?.reset();
+                         setFormData({});
+                         setActivePreset("");
+                         window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                       }}
+                       className="w-full sm:w-auto flex items-center justify-center gap-3.5 py-5 px-10 bg-slate-950/60 border border-white/10 rounded-2xl shadow-lg text-base font-extrabold text-slate-300 hover:bg-slate-900/60 hover:text-white transition-all duration-300 transform active:scale-95 cursor-pointer"
+                     >
+                       <RefreshCcw className="w-4 h-4 transition-transform hover:rotate-180 duration-500 text-slate-400" />
+                       <span>Lập hồ sơ kiểm toán mới</span>
+                     </button>
+                  </div>
+
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* ==========================================
+            TAB CONTENT: B2B (CORPORATE PROPOSALS)
+            ========================================== */}
+        {activeTab === "b2b" && (
+          <div className="space-y-12">
+            {/* Main Input Form Glass Panel */}
+            <motion.div 
+              layout
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="glass-panel rounded-[2.25rem] shadow-2xl overflow-hidden border border-white/5 relative"
+            >
+              {/* Satin Finish Card Header */}
+              <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-white/5 py-6 px-8 sm:px-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 shadow-inner">
+                    <Briefcase className="w-6 h-6 text-indigo-400" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-extrabold text-white text-base tracking-tight uppercase">Mẫu đánh giá dự án & Báo giá B2B</span>
+                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mt-0.5">Bilingual B2B Corporate Bid Matrix</span>
+                  </div>
+                </div>
+                
+                {/* Quick Presets HUD for B2B */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden lg:inline-block">Chọn nhanh dự án / Presets:</span>
+                  {Object.keys(B2B_PRESETS).map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => applyB2BPreset(key as keyof typeof B2B_PRESETS)}
+                      className={cn(
+                        "text-[10px] font-black px-3.5 py-2 rounded-xl transition-all duration-300 border cursor-pointer",
+                        b2bActivePreset === key 
+                          ? "bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-600/30 scale-105" 
+                          : "bg-slate-950/60 text-slate-300 border-white/5 hover:border-indigo-500/30 hover:bg-slate-900/60"
+                      )}
+                    >
+                      {key === "it_corp" ? "IT Corporate" : key === "hospitality" ? "Hospitality Service" : "NES Executive"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Form body */}
+              <form ref={b2bFormRef} onSubmit={handleB2BSubmit} className="p-8 sm:p-10 space-y-12">
+                
+                {/* B2B Form Section 1: Client Profile */}
+                <div className="space-y-6 bg-white/[0.01] p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300 shadow-inner">
+                  <div className="flex items-center gap-3 text-slate-200 border-l-4 border-indigo-500 pl-4">
+                    <Building className="w-5 h-5 text-indigo-400" />
+                    <div>
+                      <h2 className="text-base font-extrabold uppercase tracking-wider leading-tight text-white">Hồ sơ khách hàng doanh nghiệp & Quy mô</h2>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Corporate Client Profile & Scope</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 pt-2">
+                    <Field label="Tên doanh nghiệp" subLabel="Client Name" name="clientName" required placeholder="VD: FPT Software" defaultValue={b2bFormData.clientName} />
+                    <Field label="Lĩnh vực / Ngành nghề" subLabel="Business Industry" name="industry" required placeholder="VD: Công nghệ (IT)" defaultValue={b2bFormData.industry} />
+                    <Field label="Số lượng lớp đào tạo" subLabel="Total Classes" name="totalClasses" required type="number" placeholder="1" defaultValue={b2bFormData.totalClasses} />
+                    <Field label="Tổng số lượng học viên" subLabel="Total Target Students" name="totalStudents" required type="number" placeholder="0" defaultValue={b2bFormData.totalStudents} />
+                  </div>
+                </div>
+
+                {/* B2B Form Section 2: Staffing (Teacher & TA) */}
+                <div className="space-y-6 bg-white/[0.01] p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300 shadow-inner">
+                  <div className="flex items-center gap-3 text-slate-200 border-l-4 border-emerald-500 pl-4">
+                    <Users className="w-5 h-5 text-emerald-400" />
+                    <div>
+                      <h2 className="text-base font-extrabold uppercase tracking-wider leading-tight text-white">Academic Sourcing & Giảng dạy</h2>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">B2B Sourcing Parameters (Teachers & TAs)</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-6 pt-2">
+                    <Field label="Số giờ dạy / Lớp" subLabel="Hours per Class" name="hoursPerClass" required type="number" placeholder="60" defaultValue={b2bFormData.hoursPerClass} />
+                    <Field label="Số buổi học / Lớp" subLabel="Sessions per Class" name="sessionsPerClass" required type="number" placeholder="30" defaultValue={b2bFormData.sessionsPerClass} />
+                    <SelectField 
+                      label="Phân khúc giáo viên" 
+                      subLabel="Teacher Segment" 
+                      name="teacherType" 
+                      defaultValue={b2bFormData.teacherType || "local"} 
+                      options={[
+                        { value: "local", label: "Giáo viên VN / Local" },
+                        { value: "expat", label: "Bản xứ / Expat" },
+                        { value: "native", label: "Bản ngữ / NES" }
+                      ]} 
+                    />
+                    <Field label="Lương GV / giờ (VNĐ)" subLabel="Teacher Salary / Hour" name="teacherSalaryPerHour" required type="number" placeholder="0" defaultValue={b2bFormData.teacherSalaryPerHour} />
+                    <Field label="Số trợ giảng / lớp" subLabel="TAs per Class" name="assistantsPerSession" type="number" placeholder="0" defaultValue={b2bFormData.assistantsPerSession} />
+                    <Field label="Lương trợ giảng / giờ" subLabel="TA Hourly Salary" name="assistantSalaryPerHour" type="number" placeholder="0" defaultValue={b2bFormData.assistantSalaryPerHour} />
+                  </div>
+                </div>
+
+                {/* B2B Form Section 3 & 4 Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  
+                  {/* Left Form: Custom syllabus & Travel logistics */}
+                  <div className="space-y-6 bg-white/[0.01] p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300">
+                    <div className="flex items-center gap-3 text-slate-200 border-l-4 border-violet-500 pl-4">
+                      <LayoutDashboard className="w-5 h-5 text-violet-400" />
+                      <div>
+                        <h2 className="text-base font-extrabold uppercase tracking-wider text-white leading-tight">Chi phí tùy biến & Logistics B2B</h2>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Syllabus Customization & Classroom Logistics</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-5 pt-2">
+                      <Field compact label="Phí thiết kế giáo trình riêng (Lump sum)" subLabel="Syllabus Customization Fee" name="syllabusCustomizationCost" type="number" defaultValue={b2bFormData.syllabusCustomizationCost} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <Field compact label="Phụ cấp đi lại GV / buổi dạy" subLabel="Travel Allowance / Class" name="travelAllowancePerSession" type="number" defaultValue={b2bFormData.travelAllowancePerSession} />
+                        <Field compact label="Quản lý dự án & Chăm sóc AM" subLabel="Account Manager Fee" name="accountManagerCost" type="number" defaultValue={b2bFormData.accountManagerCost} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Field compact label="Học liệu, In ấn / Học viên" subLabel="Materials Cost / Student" name="materialsCostPerStudent" type="number" defaultValue={b2bFormData.materialsCostPerStudent} />
+                        <Field compact label="Khảo sát, test đầu vào / Học viên" subLabel="Placement Test / Student" name="placementTestCostPerStudent" type="number" defaultValue={b2bFormData.placementTestCostPerStudent} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Form: Bidding pricing & Client ROI input */}
+                  <div className="space-y-6 bg-indigo-950/10 p-6 sm:p-8 rounded-[1.75rem] border border-white/5 hover:border-white/10 transition-all duration-300">
+                    <div className="flex items-center gap-3 text-slate-200 border-l-4 border-indigo-400 pl-4">
+                      <Coins className="w-5 h-5 text-indigo-400" />
+                      <div>
+                        <h2 className="text-base font-extrabold uppercase tracking-wider text-white leading-tight">Báo giá thầu & Giá trị Client ROI</h2>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Bidding Value & Client ROI Simulator</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-5 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <SelectField 
+                          compact
+                          label="Mô hình đơn giá thầu" 
+                          subLabel="Pricing Bid Model" 
+                          name="pricingModel" 
+                          defaultValue={b2bFormData.pricingModel || "hourly"} 
+                          options={[
+                            { value: "hourly", label: "Đơn giá theo giờ dạy (VND/h)" },
+                            { value: "package", label: "Trọn gói dự án (VND)" },
+                            { value: "per_student", label: "Học phí theo học viên (VND/student)" }
+                          ]} 
+                        />
+                        <Field compact label="Giá trị báo giá thầu đề xuất" subLabel="Proposals Bid Value" name="pricingValue" required type="number" placeholder="0" defaultValue={b2bFormData.pricingValue} />
+                      </div>
+                      
+                      <Field compact label="Chiết khấu thương lượng / Hoa hồng đối tác %" subLabel="Partner Discount / Commission %" name="partnerDiscountPercent" type="number" placeholder="0" defaultValue={b2bFormData.partnerDiscountPercent} />
+                      
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                        <Field compact label="Lương trung bình nhân viên (Tháng)" subLabel="Avg Staff Monthly Salary" name="avgEmployeeSalaryMonthly" type="number" placeholder="0" defaultValue={b2bFormData.avgEmployeeSalaryMonthly} />
+                        <Field compact label="Hiệu suất tiết kiệm dự kiến %" subLabel="Est. Productivity Gain %" name="estProductivityGainPercent" type="number" step="0.5" placeholder="3.0" defaultValue={b2bFormData.estProductivityGainPercent} />
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {b2bError && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="bg-rose-950/30 border border-rose-500/20 text-rose-200 px-6 py-4 rounded-2xl flex items-center gap-3.5 shadow-lg"
+                  >
+                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
+                    <span className="font-semibold text-sm leading-relaxed">{b2bError}</span>
+                  </motion.div>
+                )}
+
+                {/* Footer Form Button Row */}
+                <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+                  <p className="text-xs text-slate-400 max-w-sm flex items-start gap-2.5 italic">
+                    <Info className="w-4 h-4 shrink-0 mt-0.5 text-indigo-400 animate-pulse" />
+                    <span>Hệ thống tự động đối chiếu định mức lương giáo viên theo phân khúc và tính toán giá trị tiết kiệm năng suất cho đối tác.</span>
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={b2bLoading}
+                    className="w-full sm:w-auto group relative inline-flex items-center justify-center gap-3 py-4 px-10 border border-indigo-400/20 rounded-2xl shadow-xl text-lg font-black text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all duration-300 transform active:scale-95 disabled:opacity-50 cursor-pointer"
+                  >
+                    {b2bLoading ? (
+                      <RefreshCcw className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <span>Thẩm định thầu B2B & ROI</span>
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+
+            {/* B2B Bento Results Dashboard */}
+            <AnimatePresence>
+              {b2bResults && (
+                <motion.div 
+                  ref={b2bResultsRef}
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  className="space-y-12 pb-24"
+                >
+                  
+                  {/* Results Bento Row 1: Health Score Circular HUD & Client ROI justification */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    {/* 1. Health Score Circular Dashboard HUD (4 Cols) */}
+                    <div className="lg:col-span-4 glass-panel rounded-[2.25rem] p-8 flex flex-col items-center justify-between text-center relative overflow-hidden border border-white/5 group bg-[#070b1e]/50">
+                      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        <Activity className="w-28 h-28 text-white" />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-300 font-extrabold text-[9px] tracking-wider uppercase shadow-inner">
+                          <Activity className="w-3 h-3 text-indigo-400" />
+                          Điểm sức khỏe gói thầu / Bid Health Score
+                        </span>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">B2B Deal Safety Auditing</h4>
+                      </div>
+
+                      {/* Circular Gauge */}
+                      <div className="relative my-8 flex items-center justify-center">
+                        <div className={cn(
+                          "absolute inset-0 rounded-full blur-2xl opacity-10 transition-colors duration-1000",
+                          b2bResults.healthScore >= 80 ? "bg-emerald-500" :
+                          b2bResults.healthScore >= 55 ? "bg-amber-500" : "bg-rose-500"
+                        )} />
+                        
+                        <svg className="w-40 h-40 transform -rotate-90 filter drop-shadow-[0_0_8px_rgba(99,102,241,0.15)]">
+                          <circle cx="80" cy="80" r="60" className="stroke-slate-800/40" strokeWidth="5" fill="transparent" />
+                          <circle cx="80" cy="80" r="52" className="stroke-slate-900/50" strokeWidth="1" strokeDasharray="4 4" fill="transparent" />
+                          <motion.circle
+                            cx="80"
+                            cy="80"
+                            r="60"
+                            className={cn(
+                              "transition-all duration-1000",
+                              b2bResults.healthScore >= 80 ? "stroke-emerald-400" :
+                              b2bResults.healthScore >= 55 ? "stroke-amber-400" : "stroke-rose-400"
+                            )}
+                            strokeWidth="6"
+                            strokeLinecap="round"
+                            fill="transparent"
+                            strokeDasharray="377"
+                            initial={{ strokeDashoffset: 377 }}
+                            animate={{ strokeDashoffset: 377 - (377 * b2bResults.healthScore) / 100 }}
+                            transition={{ duration: 1.8, ease: "circOut" }}
+                          />
+                        </svg>
+                        
+                        <div className="absolute flex flex-col items-center justify-center w-28 h-28 bg-[#090e24]/90 rounded-full border border-white/5 shadow-2xl">
+                          <span className="text-4xl font-extrabold tracking-tighter text-white leading-none font-mono">
+                            {b2bResults.healthScore}
+                          </span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">ĐIỂM / DECI</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <span className={cn(
+                          "font-extrabold text-[10px] uppercase tracking-wider py-2 px-6 rounded-full border shadow-lg backdrop-blur-md transition-all duration-500",
+                          b2bResults.healthScore >= 80 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" :
+                          b2bResults.healthScore >= 55 ? "bg-amber-500/10 text-amber-300 border-amber-500/20" :
+                          "bg-rose-500/10 text-rose-300 border-rose-500/20"
+                        )}>
+                          {b2bResults.healthScore >= 80 ? "GÓI THẦU RẤT AN TOÀN / SECURE" :
+                           b2bResults.healthScore >= 55 ? "CÂN NHẮC ĐÀM PHÁN / NEGOTIABLE" : "RỦI RO TÀI CHÍNH CAO / HIGH RISK"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 2. Client-Side ROI Justification Bento (8 Cols) */}
+                    <div className="lg:col-span-8 glass-panel rounded-[2.25rem] p-8 sm:p-10 shadow-2xl border border-white/5 relative overflow-hidden flex flex-col justify-between group bg-[#070b1e]/50">
+                      <div className="absolute -top-12 -right-12 p-6 opacity-[0.02] pointer-events-none select-none">
+                        <Award className="w-72 h-72 text-white" />
+                      </div>
+
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-white/5">
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-300 font-extrabold text-[9px] tracking-wider uppercase shadow-inner">
+                            <TrendingUp className="w-3 h-3 text-emerald-400" />
+                            Giá trị năng suất thặng dư / Client Productive Value
+                          </span>
+                          <h3 className="text-xl font-extrabold text-white tracking-tight">Giá trị thặng dư tạo ra cho Khách hàng</h3>
+                        </div>
+                        <div className="text-left md:text-right flex flex-col">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">DỰ BÁO TIẾT KIỆM NĂNG SUẤT / ANNUAL SAVINGS</span>
+                          <span className="text-3xl sm:text-4xl font-extrabold text-emerald-400 tracking-tighter pt-1 font-mono">
+                            {formatCurrency(b2bResults.clientYearlyProductivitySavings)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6">
+                        <div className="bg-[#04060e]/60 rounded-2xl p-4 border border-white/5 shadow-inner">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">DOANH THU THUẦN / NET B2B PRICE</span>
+                          <span className="text-lg font-bold text-slate-100 font-mono">{formatCurrency(b2bResults.netRevenue)}</span>
+                          <span className="text-[8px] font-medium text-slate-400 block mt-1.5 leading-relaxed">
+                            Đã trừ chiết khấu hoa hồng đối tác {b2bFormData.partnerDiscountPercent || "0"}%
+                          </span>
+                        </div>
+                        <div className="bg-[#04060e]/60 rounded-2xl p-4 border border-white/5 shadow-inner">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">TỶ LỆ ROI DOANH NGHIỆP</span>
+                          <span className="text-lg font-bold text-indigo-400 font-mono">{b2bResults.clientRoiPercent.toFixed(1)}%</span>
+                          <span className="text-[8px] font-medium text-slate-400 block mt-1.5 leading-relaxed">
+                            Tỷ số giá trị tiết kiệm / tổng chi thầu
+                          </span>
+                        </div>
+                        <div className="bg-[#04060e]/60 rounded-2xl p-4 border border-white/5 shadow-inner flex flex-col justify-between gap-4">
+                          <div className="space-y-0.5">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">HIỆU QUẢ ĐẦU TƯ / Client Investment ROI</span>
+                            <span className={cn(
+                              "text-lg font-bold tracking-tighter block font-mono",
+                              b2bResults.clientRoiPercent >= 100 ? "text-emerald-400" :
+                              b2bResults.clientRoiPercent >= 50 ? "text-indigo-400" : "text-rose-450 text-rose-400"
+                            )}>
+                              {b2bResults.clientRoiPercent >= 100 ? "Xuất sắc / Excellent" :
+                               b2bResults.clientRoiPercent >= 50 ? "Hợp lý / Healthy" : "Biên thấp / Low ROI"}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden relative border border-white/5">
+                              <div className="absolute inset-0 bg-gradient-to-r from-rose-500/80 via-indigo-500/80 to-emerald-500/80" />
+                              <div className="absolute inset-0 bg-slate-950/20" />
+                              <motion.div 
+                                initial={{ left: 0 }}
+                                animate={{ left: `${Math.min(Math.max((b2bResults.clientRoiPercent / 200) * 100, 0), 96)}%` }}
+                                transition={{ duration: 1.8, ease: "circOut" }}
+                                className="absolute top-0 w-2.5 h-full bg-white rounded-full -translate-x-1 border border-black shadow-[0_0_8px_rgba(255,255,255,1)]"
+                              />
+                            </div>
+                            <div className="flex justify-between text-[6px] font-black text-slate-500 uppercase tracking-widest pt-0.5">
+                              <span>Low (&lt;50%)</span>
+                              <span>Mid (50-100)</span>
+                              <span>High (&gt;100)</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Results Bento Row 2: Advisory Strategic Ledger & Cost Distribution Bar */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    {/* 1. Advisory Strategy Recommendations Panel (7 Cols) */}
+                    <div className="lg:col-span-7 bg-[#0b0f24]/85 rounded-[2.25rem] p-6 sm:p-9 shadow-xl border border-white/5 space-y-6 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                        <Sparkles className="w-16 h-16 text-white" />
+                      </div>
+                      
+                      <div className="flex items-center gap-3.5 pb-4 border-b border-white/5">
+                        <div className="p-2.5 bg-indigo-500/10 rounded-2xl text-indigo-400 shrink-0 border border-indigo-500/20 shadow-inner">
+                          <Sparkles className="w-5 h-5 animate-pulse" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-extrabold uppercase tracking-wider text-white">Khuyến nghị đàm phán thầu B2B</h3>
+                          <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">Strategic Bid Advisory & Negotiation Rules</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 max-h-[380px] overflow-y-auto pr-3 scrollbar-thin">
+                        {b2bResults.recommendations.map((rec, i) => (
+                          <div 
+                            key={i} 
+                            className={cn(
+                              "flex items-start gap-4 p-5 rounded-2xl border transition-all duration-300 hover:scale-[1.015]",
+                              rec.type === "warning" ? "bg-rose-950/20 border-rose-500/10 hover:bg-rose-950/30 hover:border-rose-500/25" :
+                              rec.type === "success" ? "bg-emerald-950/20 border-emerald-500/10 hover:bg-emerald-950/30 hover:border-emerald-500/25" :
+                              "bg-indigo-950/25 border-indigo-500/10 hover:bg-indigo-950/35 hover:border-indigo-500/25"
+                            )}
+                          >
+                            <div className={cn(
+                              "p-2.5 rounded-xl shrink-0 mt-0.5 shadow-lg",
+                              rec.type === "warning" ? "bg-rose-500 text-white" :
+                              rec.type === "success" ? "bg-emerald-500 text-white" :
+                              "bg-indigo-600 text-white"
+                            )}>
+                              {rec.type === "warning" ? <AlertTriangle className="w-4 h-4" /> :
+                               rec.type === "success" ? <ShieldCheck className="w-4 h-4" /> :
+                               <Info className="w-4 h-4" />}
+                            </div>
+                            <div className="space-y-1.5 min-w-0">
+                              <span className={cn(
+                                "text-[8px] font-black uppercase tracking-widest block",
+                                rec.type === "warning" ? "text-rose-400" :
+                                rec.type === "success" ? "text-emerald-400" :
+                                "text-indigo-300"
+                              )}>
+                                {rec.type === "warning" ? "Rủi ro tài chính / Cost Advisory" :
+                                 rec.type === "success" ? "Lợi thế đàm phán / Negotiation Leverage" :
+                                 "Thông tin vận hành / Operational Detail"}
+                              </span>
+                              <p className="text-slate-200 text-sm font-semibold leading-relaxed">
+                                {rec.text}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 2. Interactive Segmented Cost Structure Chart (5 Cols) */}
+                    <div className="lg:col-span-5 bg-[#0b0f24]/85 rounded-[2.25rem] p-6 sm:p-9 shadow-xl border border-white/5 flex flex-col justify-between space-y-6">
+                      
+                      <div className="flex items-center gap-3.5 pb-4 border-b border-white/5">
+                        <div className="p-2.5 bg-emerald-500/10 rounded-2xl text-emerald-400 shrink-0 border border-emerald-500/20 shadow-inner">
+                          <BarChart3 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-extrabold uppercase tracking-wider text-white">Cơ cấu định phí & Giá vốn B2B</h3>
+                          <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">B2B Delivery Cost Distribution</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-8 flex-grow flex flex-col justify-center py-4">
+                        <div className="w-full h-8 bg-slate-950/70 rounded-2xl p-1 border border-white/5 overflow-hidden flex shadow-inner relative">
+                          {b2bResults.totalTeachingCost > 0 && (
+                            <motion.div 
+                              title="Chi phí giảng dạy"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(b2bResults.totalTeachingCost / b2bResults.totalCostOfDelivery) * 100}%` }}
+                              transition={{ duration: 1.2, ease: "easeOut" }}
+                              className="bg-indigo-600 h-full text-white text-[10px] font-black flex items-center justify-center cursor-default rounded-l-xl hover:opacity-90 transition-opacity border-r border-slate-950 shadow-lg relative overflow-hidden"
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
+                              {((b2bResults.totalTeachingCost / b2bResults.totalCostOfDelivery) * 100) > 18 && 
+                                `${((b2bResults.totalTeachingCost / b2bResults.totalCostOfDelivery) * 100).toFixed(0)}%`}
+                            </motion.div>
+                          )}
+                          {b2bResults.totalCustomAndLogisticsCost > 0 && (
+                            <motion.div 
+                              title="Tùy chỉnh & Logistics"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(b2bResults.totalCustomAndLogisticsCost / b2bResults.totalCostOfDelivery) * 100}%` }}
+                              transition={{ duration: 1.2, ease: "easeOut" }}
+                              className="bg-violet-500 h-full text-white text-[10px] font-black flex items-center justify-center cursor-default hover:opacity-90 transition-opacity border-r border-slate-950 shadow-lg relative overflow-hidden"
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
+                              {((b2bResults.totalCustomAndLogisticsCost / b2bResults.totalCostOfDelivery) * 100) > 18 && 
+                                `${((b2bResults.totalCustomAndLogisticsCost / b2bResults.totalCostOfDelivery) * 100).toFixed(0)}%`}
+                            </motion.div>
+                          )}
+                          {b2bResults.totalMaterialsCost > 0 && (
+                            <motion.div 
+                              title="Học liệu học viên"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(b2bResults.totalMaterialsCost / b2bResults.totalCostOfDelivery) * 100}%` }}
+                              transition={{ duration: 1.2, ease: "easeOut" }}
+                              className="bg-emerald-500 h-full text-white text-[10px] font-black flex items-center justify-center cursor-default rounded-r-xl hover:opacity-90 transition-opacity shadow-lg relative overflow-hidden"
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
+                              {((b2bResults.totalMaterialsCost / b2bResults.totalCostOfDelivery) * 100) > 18 && 
+                                `${((b2bResults.totalMaterialsCost / b2bResults.totalCostOfDelivery) * 100).toFixed(0)}%`}
+                            </motion.div>
+                          )}
+                        </div>
+
+                        {/* Detailed Stats Legend */}
+                        <div className="grid grid-cols-1 gap-4 pt-2">
+                          <div className="flex items-center justify-between text-sm py-1 border-b border-white/[0.03] px-1">
+                            <div className="flex items-center gap-3">
+                              <span className="w-3 h-3 bg-indigo-600 rounded-md shadow-lg shrink-0" />
+                              <span className="text-slate-300 font-bold text-xs">Giảng dạy / Direct Teaching (GV + TA)</span>
+                            </div>
+                            <span className="font-extrabold text-slate-100 font-mono">
+                              {((b2bResults.totalTeachingCost / b2bResults.totalCostOfDelivery) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-sm py-1 border-b border-white/[0.03] px-1">
+                            <div className="flex items-center gap-3">
+                              <span className="w-3 h-3 bg-violet-500 rounded-md shadow-lg shrink-0" />
+                              <span className="text-slate-300 font-bold text-xs">Syllabus & Logistics / Custom Ops</span>
+                            </div>
+                            <span className="font-extrabold text-slate-100 font-mono">
+                              {((b2bResults.totalCustomAndLogisticsCost / b2bResults.totalCostOfDelivery) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-sm py-1 px-1">
+                            <div className="flex items-center gap-3">
+                              <span className="w-3 h-3 bg-emerald-500 rounded-md shadow-lg shrink-0" />
+                              <span className="text-slate-300 font-bold text-xs">Học liệu, In ấn / Student Books & Tests</span>
+                            </div>
+                            <span className="font-extrabold text-slate-100 font-mono">
+                              {((b2bResults.totalMaterialsCost / b2bResults.totalCostOfDelivery) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Results Bento Row 3: Corporate Cash Ledger & Advanced KPIs */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    
+                    {/* 1. Cash Balance Sheet Ledger */}
+                    <div className="glass-panel rounded-[2.25rem] shadow-2xl border border-white/5 overflow-hidden">
+                      <div className="py-6 px-8 border-b border-white/5 bg-slate-950/40 flex items-center justify-between">
+                        <div className="flex items-center gap-3.5">
+                          <BarChart3 className="w-5 h-5 text-indigo-400" />
+                          <div className="flex flex-col">
+                            <h3 className="text-base font-extrabold uppercase tracking-tight text-white">Sơ đồ chi phí dự án B2B</h3>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">B2B Project Cash Ledger</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-8 sm:p-10 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10 bg-[#070b1e]/30">
+                         <StatItem label="Chi phí giảng dạy" subLabel="Direct Sourcing (GV+TA)" value={formatCurrency(b2bResults.totalTeachingCost)} />
+                         <StatItem label="Tùy chỉnh giáo trình & Logistics" subLabel="Customization & Travel Cost" value={formatCurrency(b2bResults.totalCustomAndLogisticsCost)} />
+                         <StatItem label="Học liệu học viên" subLabel="Student Books & Material Cost" value={formatCurrency(b2bResults.totalMaterialsCost)} />
+                         <StatItem label="Doanh thu thầu ròng (Net)" subLabel="Net Proposals Revenue" value={formatCurrency(b2bResults.netRevenue)} />
+                         <StatItem label="Tổng chi phí vận hành" subLabel="Total Delivery Cost" value={formatCurrency(b2bResults.totalCostOfDelivery)} highlighted />
+                         <StatItem label="Lợi nhuận ròng dự kiến" subLabel="Expected Net Margin" value={formatCurrency(b2bResults.netProfit)} highlighted />
+                      </div>
+                    </div>
+
+                    {/* 2. Corporate KPIs & Ratios Indicators */}
+                    <div className="glass-panel rounded-[2.25rem] shadow-2xl border border-white/5 overflow-hidden">
+                      <div className="py-6 px-8 border-b border-white/5 bg-slate-950/40 flex items-center justify-between">
+                        <div className="flex items-center gap-3.5">
+                          <Percent className="w-5 h-5 text-emerald-400" />
+                          <div className="flex flex-col">
+                            <h3 className="text-base font-extrabold uppercase tracking-tight text-white">Chỉ số tỷ suất & Đơn giá hòa vốn</h3>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">B2B Financial KPIs & Ratios</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-6 sm:p-8 space-y-2 bg-[#070b1e]/30">
+                        <MetricRow label="Phân khúc giáo viên đứng lớp" subLabel="Assigned Teacher Segment" value={getB2BTeacherTypeLabel(b2bFormData.teacherType)} />
+                        
+                        <div className="flex items-center justify-between py-3 border-b border-white/[0.03] px-2 -mx-2 hover:bg-white/[0.02] transition-colors rounded-lg">
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <span className="text-slate-300 text-xs font-bold tracking-tight leading-tight">Biên lợi nhuận gộp B2B</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5">Project Gross Profit Margin</span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={cn(
+                              "text-2xl font-black tracking-tighter font-mono",
+                              b2bResults.profitMarginPercent >= 45 ? "text-emerald-400" :
+                              b2bResults.profitMarginPercent >= 25 ? "text-amber-400" : "text-rose-450 text-rose-400"
+                            )}>
+                              {b2bResults.profitMarginPercent.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <MetricRow label="Mẫu hình thanh toán báo giá" subLabel="Negotiated Bid Model" value={getB2BPricingModelLabel(b2bFormData.pricingModel)} />
+                        <MetricRow label="Mức đơn giá thầu hòa vốn ròng" subLabel="Break-even Price Unit Required" value={formatCurrency(b2bResults.breakEvenValue)} />
+                        <MetricRow label="Tổng số giờ thầu đào tạo" subLabel="Total Active Class Hours" value={`${b2bResults.hoursPerSession * Number(b2bFormData.sessionsPerClass) * Number(b2bFormData.totalClasses)} giờ`} />
+                        <MetricRow label="Lương GV chính trung bình" subLabel="Main Teacher Wage (Hourly)" value={formatCurrency(Number(b2bFormData.teacherSalaryPerHour))} />
+                        <MetricRow label="Số giờ thầu học viên tiếp cận / Lớp" subLabel="Class Active Learning Volume" value={`${Number(b2bFormData.hoursPerClass)} giờ`} />
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Action buttons footer */}
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
+                     <button
+                       onClick={downloadB2BCSV}
+                       className="w-full sm:w-auto group flex items-center justify-center gap-3.5 py-5 px-10 bg-white text-slate-950 border border-slate-200 rounded-2xl shadow-xl text-base font-black hover:bg-slate-100 transition-all duration-300 transform active:scale-95 cursor-pointer"
+                     >
+                       <Download className="w-5 h-5 text-indigo-600" />
+                       <span>Xuất báo cáo thầu B2B (CSV)</span>
+                     </button>
+                     <button
+                       onClick={() => { 
+                         setB2BResults(null); 
+                         b2bFormRef.current?.reset();
+                         setB2BFormData({});
+                         setB2BActivePreset("");
+                         window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                       }}
+                       className="w-full sm:w-auto flex items-center justify-center gap-3.5 py-5 px-10 bg-slate-950/60 border border-white/10 rounded-2xl shadow-lg text-base font-extrabold text-slate-300 hover:bg-slate-900/60 hover:text-white transition-all duration-300 transform active:scale-95 cursor-pointer"
+                     >
+                       <RefreshCcw className="w-4 h-4 transition-transform hover:rotate-180 duration-500 text-slate-400" />
+                       <span>Lập báo cáo thẩm định mới</span>
+                     </button>
+                  </div>
+
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
 
       </div>
     </main>
@@ -991,6 +1799,60 @@ function Field({ label, subLabel, name, id, type = "text", required, placeholder
   );
 }
 
+interface SelectFieldProps {
+  label: string;
+  subLabel?: string;
+  name: string;
+  id?: string;
+  required?: boolean;
+  compact?: boolean;
+  defaultValue?: string;
+  options: { value: string; label: string }[];
+}
+
+function SelectField({ label, subLabel, name, id, required, compact, defaultValue, options }: SelectFieldProps) {
+  const selectId = id || name;
+  return (
+    <div className="flex flex-col gap-1.5 group min-w-0">
+      <label 
+        htmlFor={selectId}
+        className="font-extrabold tracking-tight transition-colors group-focus-within:text-indigo-400 flex flex-col"
+      >
+        <span className={cn(compact ? "text-xs" : "text-sm", "leading-normal text-slate-200")}>
+          {label} {required && <span className="text-rose-400">*</span>}
+        </span>
+        {subLabel && (
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-normal mt-0.5 block">
+            {subLabel}
+          </span>
+        )}
+      </label>
+      <select
+        id={selectId}
+        name={name}
+        required={required}
+        defaultValue={defaultValue}
+        className={cn(
+          "w-full bg-[#030611]/80 hover:bg-slate-950 border border-white/5 hover:border-white/15 focus:bg-[#030611] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all rounded-2xl px-4 text-white font-semibold outline-none appearance-none cursor-pointer",
+          compact ? "py-2.5 text-xs shadow-inner" : "py-3.5 text-sm shadow-md"
+        )}
+        style={{ 
+          backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e")`, 
+          backgroundRepeat: 'no-repeat', 
+          backgroundPosition: 'right 1rem center', 
+          backgroundSize: '1rem' 
+        }}
+      >
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value} className="bg-slate-950 text-white">
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 interface StatItemProps {
   label: string;
   subLabel?: string;
@@ -1029,7 +1891,6 @@ interface MetricRowProps {
   suffixEn?: string;
 }
 
-// Advanced flexible Row to adapt fully to multiple layouts, preventing clipping of text tags
 function MetricRow({ label, subLabel, value, suffix, suffixEn }: MetricRowProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 py-3 border-b border-white/[0.03] last:border-0 hover:bg-white/[0.02] transition-colors rounded-lg px-2 -mx-2 min-w-0">
